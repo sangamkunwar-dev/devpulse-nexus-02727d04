@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          details: Json
+          event_type: string
+          id: string
+          subject: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          event_type: string
+          id?: string
+          subject?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          event_type?: string
+          id?: string
+          subject?: string | null
+        }
+        Relationships: []
+      }
+      app_config: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
       challenge_attempts: {
         Row: {
           answer: string
@@ -474,6 +516,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      notify_admin_event: {
+        Args: { _kind: string; _payload: Json }
+        Returns: undefined
       }
       publish_daily_challenge: { Args: never; Returns: string }
       submit_challenge_answer: {

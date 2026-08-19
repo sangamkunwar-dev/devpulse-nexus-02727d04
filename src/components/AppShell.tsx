@@ -17,6 +17,8 @@ import {
   Command,
   FolderKanban,
   Shield,
+  History,
+  ScrollText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useProfile } from "@/hooks/useSession";
@@ -30,11 +32,15 @@ const NAV = [
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/reviews", label: "Review Labs", icon: GitPullRequest },
   { to: "/challenges", label: "Daily Bug", icon: Bug },
+  { to: "/history", label: "My History", icon: History },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-const ADMIN_ITEM = { to: "/admin", label: "Admin", icon: Shield } as const;
+const ADMIN_ITEMS = [
+  { to: "/admin", label: "Admin", icon: Shield },
+  { to: "/audit", label: "Audit Log", icon: ScrollText },
+] as const;
 
 export function AppShell({ children, title }: { children: ReactNode; title?: string }) {
   const navigate = useNavigate();
@@ -49,7 +55,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
       return !!data;
     },
   });
-  const nav = isAdmin ? [...NAV, ADMIN_ITEM] : NAV;
+  const nav = isAdmin ? [...NAV, ...ADMIN_ITEMS] : NAV;
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
