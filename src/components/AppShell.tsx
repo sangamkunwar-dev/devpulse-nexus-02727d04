@@ -55,7 +55,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
       return !!data;
     },
   });
-  const nav = isAdmin ? [...NAV, ADMIN_ITEM] : NAV;
+  const nav = isAdmin ? [...NAV, ...ADMIN_ITEMS] : NAV;
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
