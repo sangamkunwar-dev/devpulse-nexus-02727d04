@@ -1,9 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Bug, CheckCircle2, XCircle, Lightbulb, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureTodayChallenge } from "@/lib/challenges.functions";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +15,16 @@ import { CodeBlock } from "@/components/CodeBlock";
 import { useSession } from "@/hooks/useSession";
 
 export const Route = createFileRoute("/_authenticated/challenges")({
+  head: () => ({
+    meta: [
+      { title: "Daily Bug Challenge — DevPulse" },
+      { name: "description", content: "Read today's broken code snippet, submit your patch, and get instant feedback plus XP." },
+      { property: "og:title", content: "Daily Bug Challenge — DevPulse" },
+      { property: "og:description", content: "A fresh bug every day. Find it, patch it, earn XP." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: ChallengesPage,
 });
 
