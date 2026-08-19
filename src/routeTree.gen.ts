@@ -23,8 +23,10 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/notes'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
+import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
+import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
@@ -100,6 +102,11 @@ const AuthenticatedLeaderboardRoute =
     path: '/leaderboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -108,6 +115,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 const AuthenticatedChallengesRoute = AuthenticatedChallengesRouteImport.update({
   id: '/challenges',
   path: '/challenges',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -140,8 +152,10 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/audit': typeof AuthenticatedAuditRoute
   '/challenges': typeof AuthenticatedChallengesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/history': typeof AuthenticatedHistoryRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -161,8 +175,10 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/audit': typeof AuthenticatedAuditRoute
   '/challenges': typeof AuthenticatedChallengesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/history': typeof AuthenticatedHistoryRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -184,8 +200,10 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/audit': typeof AuthenticatedAuditRoute
   '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/notes': typeof AuthenticatedNotesRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -207,8 +225,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/admin'
+    | '/audit'
     | '/challenges'
     | '/dashboard'
+    | '/history'
     | '/leaderboard'
     | '/notes'
     | '/onboarding'
@@ -228,8 +248,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/admin'
+    | '/audit'
     | '/challenges'
     | '/dashboard'
+    | '/history'
     | '/leaderboard'
     | '/notes'
     | '/onboarding'
@@ -250,8 +272,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/_authenticated/admin'
+    | '/_authenticated/audit'
     | '/_authenticated/challenges'
     | '/_authenticated/dashboard'
+    | '/_authenticated/history'
     | '/_authenticated/leaderboard'
     | '/_authenticated/notes'
     | '/_authenticated/onboarding'
@@ -376,6 +400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLeaderboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/history': {
+      id: '/_authenticated/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -388,6 +419,13 @@ declare module '@tanstack/react-router' {
       path: '/challenges'
       fullPath: '/challenges'
       preLoaderRoute: typeof AuthenticatedChallengesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audit': {
+      id: '/_authenticated/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuthenticatedAuditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -423,8 +461,10 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
   AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedNotesRoute: typeof AuthenticatedNotesRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -437,8 +477,10 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAuditRoute: AuthenticatedAuditRoute,
   AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedNotesRoute: AuthenticatedNotesRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
