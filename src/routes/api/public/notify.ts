@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const ADMIN_EMAIL = "sangamkunwar48@gmail.com";
+const FALLBACK_ADMIN_EMAIL = "sangamkunwar48@gmail.com";
 
 type Body = { kind?: string; payload?: Record<string, unknown> };
 
