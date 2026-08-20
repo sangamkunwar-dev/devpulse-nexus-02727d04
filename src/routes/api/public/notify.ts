@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const ADMIN_EMAIL = "sangamkunwar48@gmail.com";
+const FALLBACK_ADMIN_EMAIL = "sangamkunwar48@gmail.com";
 
 type Body = { kind?: string; payload?: Record<string, unknown> };
 
@@ -63,12 +63,21 @@ export const Route = createFileRoute("/api/public/notify")({
         const apiKey = process.env['RESEND_API_KEY'];
         if (!apiKey) return new Response("Email not configured", { status: 200 });
 
+        const { data: rows } = await supabaseAdmin
+          .from("notification_recipients" as never)
+          .select("email, enabled")
+          .eq("enabled", true)
+          .returns<{ email: string; enabled: boolean }[]>();
+
+        const recipients = (rows ?? []).map((r) => r.email).filter(Boolean);
+        if (!recipients.length) recipients.push(FALLBACK_ADMIN_EMAIL);
+
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             from: "DevPulse <onboarding@resend.dev>",
-            to: [ADMIN_EMAIL],
+            to: recipients,
             subject: mail.subject,
             html: mail.html,
           }),
