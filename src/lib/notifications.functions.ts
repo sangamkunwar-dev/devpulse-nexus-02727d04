@@ -9,10 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const sendTestNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context as {
-      supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> };
-      userId: string;
-    };
+    const { supabase, userId } = context;
 
     const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
       _user_id: userId,
