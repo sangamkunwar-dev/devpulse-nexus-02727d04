@@ -22,7 +22,7 @@ function todayISO() {
 
 async function generateDailyBug(date: string): Promise<GeneratedChallenge> {
   const { object } = await generateObject({
-    model: gateway("google/gemini-3.5-flash"),
+    model: gateway("google/gemini-2.5-flash"),
     schema: generatedChallengeSchema,
     system: "You create safe, educational daily debugging challenges for software developers. Return exactly one self-contained bug with one clear corrected answer. Do not include secrets, credentials, malware, exploit instructions, or harmful code.",
     prompt: `Create a fresh debugging challenge for ${date}. Vary the language and bug category from common web development issues. The broken code must be valid-looking and the answer_pattern must be a regex compatible with PostgreSQL regexp_match. Keep the fix unambiguous and explain why it works.`,
@@ -66,10 +66,12 @@ export const ensureTodayChallenge = createServerFn({ method: "POST" }).handler(a
       return await publishTemplateFallback(supabaseAdmin);
     }
     return { challengeId: inserted.id, source: "ai" as const, error: null };
-  } catch {
+  } catch (generationError) {
+    console.error("[daily-bug] AI generation failed; using template fallback", generationError);
     try {
       return await publishTemplateFallback(supabaseAdmin);
-    } catch {
+    } catch (fallbackError) {
+      console.error("[daily-bug] Template fallback failed", fallbackError);
       return { challengeId: null, source: null, error: "generation_failed" as const };
     }
   }

@@ -168,7 +168,7 @@ function AdminPage() {
     try {
       const result = await ensureChallenge();
       if (result.error) {
-        toast.error("Could not publish today’s challenge. Check the server logs and Supabase migration.");
+        toast.error(`Could not publish today’s challenge (${result.error}). Apply the daily challenge migration in Supabase, then try again.`);
         return;
       }
       toast.success(`Today’s ${result.source === "ai" ? "AI-generated" : "template fallback"} bug is published.`);
