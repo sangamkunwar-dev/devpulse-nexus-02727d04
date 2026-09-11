@@ -31,6 +31,7 @@ import { Route as AuthenticatedSnippetsRouteImport } from './routes/_authenticat
 import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
 import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
+import { Route as ApiCronDailyBugRouteImport } from './routes/api/cron/daily-bug'
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
 
 const IndexRoute = IndexRouteImport.update({
@@ -144,6 +145,11 @@ const AuthenticatedReviewsIdRoute = AuthenticatedReviewsIdRouteImport.update({
   path: '/reviews/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiCronDailyBugRoute = ApiCronDailyBugRouteImport.update({
+  id: '/api/cron/daily-bug',
+  path: '/api/cron/daily-bug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicNotifyRoute = ApiPublicNotifyRouteImport.update({
   id: '/api/public/notify',
   path: '/api/public/notify',
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/snippets': typeof AuthenticatedSnippetsRoute
   '/u/$username': typeof UUsernameRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
+  '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/reviews/': typeof AuthenticatedReviewsIndexRoute
 }
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/snippets': typeof AuthenticatedSnippetsRoute
   '/u/$username': typeof UUsernameRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
+  '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/reviews': typeof AuthenticatedReviewsIndexRoute
 }
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/_authenticated/snippets': typeof AuthenticatedSnippetsRoute
   '/u/$username': typeof UUsernameRoute
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
+  '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/_authenticated/reviews/': typeof AuthenticatedReviewsIndexRoute
 }
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/snippets'
     | '/u/$username'
     | '/reviews/$id'
+    | '/api/cron/daily-bug'
     | '/api/public/notify'
     | '/reviews/'
   fileRoutesByTo: FileRoutesByTo
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/snippets'
     | '/u/$username'
     | '/reviews/$id'
+    | '/api/cron/daily-bug'
     | '/api/public/notify'
     | '/reviews'
   id:
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/_authenticated/snippets'
     | '/u/$username'
     | '/_authenticated/reviews/$id'
+    | '/api/cron/daily-bug'
     | '/api/public/notify'
     | '/_authenticated/reviews/'
   fileRoutesById: FileRoutesById
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   UUsernameRoute: typeof UUsernameRoute
+  ApiCronDailyBugRoute: typeof ApiCronDailyBugRoute
   ApiPublicNotifyRoute: typeof ApiPublicNotifyRoute
 }
 
@@ -469,6 +482,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReviewsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/cron/daily-bug': {
+      id: '/api/cron/daily-bug'
+      path: '/api/cron/daily-bug'
+      fullPath: '/api/cron/daily-bug'
+      preLoaderRoute: typeof ApiCronDailyBugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/notify': {
       id: '/api/public/notify'
       path: '/api/public/notify'
@@ -524,6 +544,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   UUsernameRoute: UUsernameRoute,
+  ApiCronDailyBugRoute: ApiCronDailyBugRoute,
   ApiPublicNotifyRoute: ApiPublicNotifyRoute,
 }
 export const routeTree = rootRouteImport

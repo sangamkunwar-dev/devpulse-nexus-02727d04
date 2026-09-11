@@ -75,11 +75,8 @@ async function publishTemplateFallback(supabaseAdmin: any, date: string) {
   return { challengeId: challenge.id, source: "template" as const, error: null };
 }
 
-/** Ensures today's challenge exists. AI is preferred; the vetted SQL template bank is the fallback. */
-export const ensureTodayChallenge = createServerFn({ method: "POST" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const date = todayISO();
-
+/** Publishes one date exactly once. AI is preferred; the vetted template bank is the fallback. */
+export async function publishDailyBug(supabaseAdmin: any, date: string) {
   const { data: existing, error: lookupError } = await supabaseAdmin
     .from("challenges")
     .select("id, source")
@@ -114,4 +111,9 @@ export const ensureTodayChallenge = createServerFn({ method: "POST" }).handler(a
       return { challengeId: null, source: null, error: "generation_failed" as const };
     }
   }
+}
+
+export const ensureTodayChallenge = createServerFn({ method: "POST" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return publishDailyBug(supabaseAdmin, todayISO());
 });
