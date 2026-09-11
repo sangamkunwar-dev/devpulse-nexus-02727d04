@@ -85,8 +85,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "DevPulse" },
+      { name: "application-name", content: "DevPulse" },
       ...(import.meta.env.VITE_GOOGLE_SITE_VERIFICATION
-        ? [{ name: "google-site-verification", content: import.meta.env.VITE_GOOGLE_SITE_VERIFICATION as string }]
+        ? [
+            {
+              name: "google-site-verification",
+              content: import.meta.env.VITE_GOOGLE_SITE_VERIFICATION as string,
+            },
+          ]
         : []),
       { title: "DevPulse — Developer Workspace & Learning Hub" },
       {
@@ -104,14 +110,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "DevPulse — Developer Workspace & Learning Hub" },
-      { name: "twitter:description", content: "DevPulse is a collaboration hub for developers and ICT students: offline-first notes, peer code review labs, daily bug challenges, snippets and bento portfolios." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/24849c6f-eb89-4adc-82f0-410f65cbf92d" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/24849c6f-eb89-4adc-82f0-410f65cbf92d" },
+      {
+        name: "twitter:description",
+        content:
+          "DevPulse is a collaboration hub for developers and ICT students: offline-first notes, peer code review labs, daily bug challenges, snippets and bento portfolios.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/24849c6f-eb89-4adc-82f0-410f65cbf92d",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/24849c6f-eb89-4adc-82f0-410f65cbf92d",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "icon", href: "/favicon.ico" },
+      { rel: "icon", href: "/devpulse-logo.png" },
+      { rel: "shortcut icon", href: "/devpulse-logo.png" },
       { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
       { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
@@ -122,7 +141,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap",
       },
     ],
-
   }),
   shellComponent: RootShell,
   component: RootComponent,

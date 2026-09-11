@@ -10,7 +10,6 @@ import {
   Trophy,
   Settings,
   LogOut,
-  Zap,
   Menu,
   X,
   ExternalLink,
@@ -71,9 +70,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
   const sidebar = (
     <div className="flex h-full flex-col">
       <Link to="/" className="flex items-center gap-2 px-5 py-5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Zap className="h-4 w-4" />
-        </div>
+        <img src="/devpulse-logo.png" alt="DevPulse" className="h-7 w-7 rounded-lg object-cover" />
         <span className="font-display text-lg font-semibold tracking-tight">DevPulse</span>
       </Link>
 
