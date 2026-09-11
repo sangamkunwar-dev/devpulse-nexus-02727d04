@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateObject, gateway } from "ai";
+import { generateObject } from "ai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 
 const generatedChallengeSchema = z.object({
