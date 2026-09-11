@@ -21,9 +21,13 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+});
+
 async function generateDailyBug(date: string): Promise<GeneratedChallenge> {
   const { object } = await generateObject({
-    model: gateway("google/gemini-2.5-flash"),
+    model: google("gemini-2.5-flash"),
     schema: generatedChallengeSchema,
     system: "You create safe, educational daily debugging challenges for software developers. Return exactly one self-contained bug with one clear corrected answer. Do not include secrets, credentials, malware, exploit instructions, or harmful code.",
     prompt: `Create a fresh debugging challenge for ${date}. Vary the language and bug category from common web development issues. The broken code must be valid-looking and the answer_pattern must be a regex compatible with PostgreSQL regexp_match. Keep the fix unambiguous and explain why it works.`,
