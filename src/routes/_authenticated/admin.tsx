@@ -106,6 +106,37 @@ function AdminPage() {
     broken_code: "", hint: "", xp_reward: 50, answer_pattern: "", explanation: "",
   });
   const [saving, setSaving] = useState(false);
+  const [scheduleSaving, setScheduleSaving] = useState(false);
+  const [schedule, setSchedule] = useState({ publish_time: "00:05", timezone: "UTC" });
+
+  const scheduleQuery = useQuery({
+    queryKey: ["admin-daily-bug-schedule"],
+    enabled: !!isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_bug_settings" as never)
+        .select("publish_time, timezone")
+        .eq("id", true)
+        .maybeSingle();
+      if (error) throw error;
+      const row = data as { publish_time?: string; timezone?: string } | null;
+      const next = { publish_time: row?.publish_time?.slice(0, 5) ?? "00:05", timezone: row?.timezone ?? "UTC" };
+      setSchedule(next);
+      return next;
+    },
+  });
+
+  const saveSchedule = async () => {
+    setScheduleSaving(true);
+    const { error } = await supabase
+      .from("daily_bug_settings" as never)
+      .update({ publish_time: `${schedule.publish_time}:00`, timezone: schedule.timezone, updated_at: new Date().toISOString(), updated_by: userId } as never)
+      .eq("id", true);
+    setScheduleSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Daily bug schedule saved for ${schedule.publish_time} ${schedule.timezone}.`);
+    qc.invalidateQueries({ queryKey: ["admin-daily-bug-schedule"] });
+  };
 
   const addTemplate = async () => {
     if (!form.title || !form.broken_code || !form.answer_pattern) {
@@ -197,7 +228,7 @@ function AdminPage() {
               <h3 className="font-display text-lg font-semibold">Recent challenges</h3>
               <Button size="sm" variant="outline" onClick={publishToday}><RefreshCw className="mr-1.5 h-3.5 w-3.5" />Publish today</Button>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">A new bug auto-publishes every day at 00:05 UTC from the template pool.</p>
+            <p className="mt-1 text-xs text-muted-foreground">A new AI-generated bug is created daily using the schedule below, with a template fallback if AI is unavailable.</p>
             <div className="mt-3 space-y-1.5">
               {upcoming.data?.map((c) => (
                 <div key={c.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
@@ -228,6 +259,36 @@ function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div className="bento-card p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display text-lg font-semibold">Daily bug schedule</h3>
+              <p className="mt-1 text-xs text-muted-foreground">AI generation runs when the daily job reaches this time. The page safety net still creates a bug if the job was missed.</p>
+            </div>
+            <Badge variant="accent">Admin only</Badge>
+          </div>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="grid gap-1 text-xs text-muted-foreground">
+              Publish time
+              <Input type="time" value={schedule.publish_time} onChange={(e) => setSchedule({ ...schedule, publish_time: e.target.value })} />
+            </label>
+            <label className="grid gap-1 text-xs text-muted-foreground">
+              Time zone
+              <select className="h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground" value={schedule.timezone} onChange={(e) => setSchedule({ ...schedule, timezone: e.target.value })}>
+                <option value="UTC">UTC</option>
+                <option value="Asia/Kathmandu">Asia/Kathmandu</option>
+                <option value="Asia/Kolkata">Asia/Kolkata</option>
+                <option value="Europe/London">Europe/London</option>
+                <option value="America/New_York">America/New_York</option>
+                <option value="America/Los_Angeles">America/Los_Angeles</option>
+              </select>
+            </label>
+            <Button onClick={saveSchedule} disabled={scheduleSaving || scheduleQuery.isLoading}>
+              {scheduleSaving ? "Saving…" : "Save schedule"}
+            </Button>
           </div>
         </div>
 
