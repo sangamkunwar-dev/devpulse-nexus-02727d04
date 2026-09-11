@@ -30,10 +30,49 @@ async function generateDailyBug(date: string): Promise<GeneratedChallenge> {
   return generatedChallengeSchema.parse(object);
 }
 
-async function publishTemplateFallback(supabaseAdmin: any) {
-  const { data, error } = await supabaseAdmin.rpc("publish_daily_challenge");
-  if (error) throw error;
-  return { challengeId: (data as string | null) ?? null, source: "template" as const };
+async function publishTemplateFallback(supabaseAdmin: any, date: string) {
+  const { data: template, error: templateError } = await supabaseAdmin
+    .from("challenge_templates")
+    .select("id, title, language, difficulty, prompt, broken_code, hint, xp_reward, answer_pattern, explanation")
+    .order("last_used_on", { ascending: true, nullsFirst: true })
+    .limit(1)
+    .maybeSingle();
+  if (templateError) throw templateError;
+  if (!template) throw new Error("No challenge templates are available.");
+
+  const { data: challenge, error: challengeError } = await supabaseAdmin
+    .from("challenges")
+    .insert({
+      challenge_date: date,
+      title: template.title,
+      language: template.language,
+      difficulty: template.difficulty,
+      prompt: template.prompt,
+      broken_code: template.broken_code,
+      hint: template.hint,
+      xp_reward: template.xp_reward,
+      source: "template",
+    })
+    .select("id")
+    .single();
+  if (challengeError) throw challengeError;
+
+  const { error: solutionError } = await supabaseAdmin.from("challenge_solutions").insert({
+    challenge_id: challenge.id,
+    answer_pattern: template.answer_pattern,
+    explanation: template.explanation,
+  });
+  if (solutionError) {
+    await supabaseAdmin.from("challenges").delete().eq("id", challenge.id);
+    throw solutionError;
+  }
+
+  await supabaseAdmin
+    .from("challenge_templates")
+    .update({ last_used_on: date })
+    .eq("id", template.id);
+
+  return { challengeId: challenge.id, source: "template" as const, error: null };
 }
 
 /** Ensures today's challenge exists. AI is preferred; the vetted SQL template bank is the fallback. */
@@ -58,18 +97,18 @@ export const ensureTodayChallenge = createServerFn({ method: "POST" }).handler(a
       .single();
     if (insertError) {
       const { data: raced } = await supabaseAdmin.from("challenges").select("id, source").eq("challenge_date", date).maybeSingle();
-      return raced ? { challengeId: raced.id, source: raced.source ?? "template", error: null } : await publishTemplateFallback(supabaseAdmin);
+      return raced ? { challengeId: raced.id, source: raced.source ?? "template", error: null } : await publishTemplateFallback(supabaseAdmin, date);
     }
     const { error: solutionError } = await supabaseAdmin.from("challenge_solutions").insert({ challenge_id: inserted.id, answer_pattern: bug.answer_pattern, explanation: bug.explanation });
     if (solutionError) {
       await supabaseAdmin.from("challenges").delete().eq("id", inserted.id);
-      return await publishTemplateFallback(supabaseAdmin);
+      return await publishTemplateFallback(supabaseAdmin, date);
     }
     return { challengeId: inserted.id, source: "ai" as const, error: null };
   } catch (generationError) {
     console.error("[daily-bug] AI generation failed; using template fallback", generationError);
     try {
-      return await publishTemplateFallback(supabaseAdmin);
+      return await publishTemplateFallback(supabaseAdmin, date);
     } catch (fallbackError) {
       console.error("[daily-bug] Template fallback failed", fallbackError);
       return { challengeId: null, source: null, error: "generation_failed" as const };
