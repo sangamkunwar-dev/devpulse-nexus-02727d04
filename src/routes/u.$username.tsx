@@ -265,9 +265,11 @@ function PortfolioPage() {
           </div>
         )}
 
-        <footer className="mt-12 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <footer className="mt-12 flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
           <Zap className="h-4 w-4 text-primary" />
-          Built with <Link to="/" className="text-primary hover:underline">DevPulse</Link>
+          <span>Made by <span className="text-foreground">Sangam Kunwar</span></span>
+          <span aria-hidden="true">·</span>
+          <span>Built with <Link to="/" className="text-primary hover:underline">DevPulse</Link></span>
         </footer>
       </div>
     </div>
