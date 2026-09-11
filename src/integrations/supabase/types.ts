@@ -174,6 +174,7 @@ export type Database = {
           prompt: string
           title: string
           xp_reward: number
+          source: "ai" | "template"
         }
         Insert: {
           broken_code: string
@@ -186,6 +187,7 @@ export type Database = {
           prompt: string
           title: string
           xp_reward?: number
+          source?: "ai" | "template"
         }
         Update: {
           broken_code?: string

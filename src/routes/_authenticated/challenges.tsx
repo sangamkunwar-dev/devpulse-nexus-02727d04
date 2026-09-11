@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -35,14 +35,21 @@ function todayISO() {
 function ChallengesPage() {
   const { userId } = useSession();
   const queryClient = useQueryClient();
+  const ensureChallenge = useServerFn(ensureTodayChallenge);
+  const { data: ensured } = useQuery({
+    queryKey: ["daily-challenge-generation", todayISO()],
+    queryFn: () => ensureChallenge(),
+    enabled: !!userId,
+    staleTime: 60_000,
+  });
   const [answer, setAnswer] = useState("");
   const [showHint, setShowHint] = useState(false);
   const [result, setResult] = useState<{ correct: boolean; explanation?: string; xp: number } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["challenges", userId],
-    enabled: !!userId,
+    queryKey: ["challenges", userId, ensured?.challengeId],
+    enabled: !!userId && ensured !== undefined,
     queryFn: async () => {
       const [todayRes, archiveRes, attemptsRes] = await Promise.all([
         supabase.from("challenges").select("*").eq("challenge_date", todayISO()).maybeSingle(),
@@ -122,7 +129,8 @@ function ChallengesPage() {
                   <Badge variant="secondary">{challenge.language}</Badge>
                   <Badge variant="accent" className="capitalize">{challenge.difficulty}</Badge>
                   <Badge>+{challenge.xp_reward} XP</Badge>
-                  {isSolved && <Badge variant="outline">✓ solved</Badge>}
+                  <Badge variant="outline">{challenge.source === "ai" ? "AI generated" : "Template fallback"}</Badge>
+                  {isSolved && <Badge variant="outline">solved</Badge>}
                 </div>
               </div>
               <p className="mt-3 text-sm text-muted-foreground">{challenge.prompt}</p>
