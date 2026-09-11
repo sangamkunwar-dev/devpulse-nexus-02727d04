@@ -1,6 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Shield, Users, Bug, GitPullRequest, NotebookPen, Code2, FolderKanban, Trash2, Sparkles, Plus, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/useSession";
+import { ensureTodayChallenge } from "@/lib/challenges.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -29,6 +31,7 @@ function useIsAdmin(userId: string | null) {
 
 function AdminPage() {
   const { userId, loading } = useSession();
+  const ensureChallenge = useServerFn(ensureTodayChallenge);
   const { data: isAdmin, isLoading: checkingRole } = useIsAdmin(userId);
   const qc = useQueryClient();
 
@@ -162,30 +165,19 @@ function AdminPage() {
   };
 
   const publishToday = async () => {
-    // trigger a no-op update to invalidate; actual publish runs via cron nightly.
-    // Also try to publish right now by inserting/selecting via a template if none exists.
-    const today = new Date().toISOString().slice(0, 10);
-    const { data: existing } = await supabase.from("challenges").select("id").eq("challenge_date", today).maybeSingle();
-    if (existing) { toast.info("Today's challenge already exists."); return; }
-    const { data: tpl } = await supabase
-      .from("challenge_templates")
-      .select("*")
-      .order("last_used_on", { ascending: true, nullsFirst: true })
-      .limit(1)
-      .maybeSingle();
-    if (!tpl) { toast.error("No templates available."); return; }
-    const { data: inserted, error } = await supabase.from("challenges").insert({
-      challenge_date: today, title: tpl.title, language: tpl.language, difficulty: tpl.difficulty,
-      prompt: tpl.prompt, broken_code: tpl.broken_code, hint: tpl.hint, xp_reward: tpl.xp_reward,
-    }).select("id").single();
-    if (error) { toast.error(error.message); return; }
-    await supabase.from("challenge_solutions").insert({
-      challenge_id: inserted.id, answer_pattern: tpl.answer_pattern, explanation: tpl.explanation,
-    });
-    await supabase.from("challenge_templates").update({ last_used_on: today }).eq("id", tpl.id);
-    toast.success("Today's challenge published.");
-    qc.invalidateQueries({ queryKey: ["admin-upcoming-challenges"] });
-    qc.invalidateQueries({ queryKey: ["challenges"] });
+    try {
+      const result = await ensureChallenge();
+      if (result.error) {
+        toast.error("Could not publish today’s challenge. Check the server logs and Supabase migration.");
+        return;
+      }
+      toast.success(`Today’s ${result.source === "ai" ? "AI-generated" : "template fallback"} bug is published.`);
+      qc.invalidateQueries({ queryKey: ["admin-upcoming-challenges"] });
+      qc.invalidateQueries({ queryKey: ["admin-stats"] });
+      qc.invalidateQueries({ queryKey: ["challenges"] });
+    } catch {
+      toast.error("Could not publish today’s challenge. Please try again.");
+    }
   };
 
   if (loading || checkingRole) {
