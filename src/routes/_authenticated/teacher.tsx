@@ -18,9 +18,11 @@ type Course = {
   is_free: boolean;
   price: number;
 };
+type Enrollment = { id: string; course_id: string; student_id: string; status: "pending" | "accepted" | "rejected"; student?: { display_name: string | null; username: string | null } | null };
 
 function TeacherDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
@@ -39,7 +41,18 @@ function TeacherDashboard() {
       .select("id,title,description,level,published,is_free,price")
       .order("created_at", { ascending: false });
     if (error) toast.error("Could not load courses.");
-    else setCourses((data ?? []) as Course[]);
+    else {
+      const nextCourses = (data ?? []) as Course[];
+      setCourses(nextCourses);
+      if (nextCourses.length) {
+        const { data: rows } = await (supabase as any)
+          .from("course_enrollments")
+          .select("id,course_id,student_id,status,student:profiles!course_enrollments_student_id_fkey(display_name,username)")
+          .in("course_id", nextCourses.map((course) => course.id))
+          .order("created_at", { ascending: false });
+        setEnrollments((rows ?? []) as Enrollment[]);
+      }
+    }
   };
 
   useEffect(() => {
@@ -131,6 +144,13 @@ function TeacherDashboard() {
     });
     if (error) return toast.error("File uploaded, but lesson could not be saved.");
     toast.success("File added as a lesson resource.");
+  };
+
+  const updateEnrollment = async (enrollment: Enrollment, status: "accepted" | "rejected") => {
+    const { error } = await (supabase as any).from("course_enrollments").update({ status }).eq("id", enrollment.id);
+    if (error) return toast.error("Could not update enrollment.");
+    setEnrollments((items) => items.map((item) => item.id === enrollment.id ? { ...item, status } : item));
+    toast.success(status === "accepted" ? "Student accepted." : "Enrollment declined.");
   };
 
   const togglePublished = async (course: Course) => {
@@ -270,6 +290,20 @@ function TeacherDashboard() {
                   </article>
                 ))}
               </div>
+            )}
+            {enrollments.length > 0 && (
+              <section className="bento-card mt-5 p-5 sm:p-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div><h2 className="font-display text-xl font-semibold">Student requests</h2><p className="text-sm text-muted-foreground">Approve paid enrollments before lessons are unlocked.</p></div>
+                  <GraduationCap className="text-primary" />
+                </div>
+                <div className="grid gap-3">
+                  {enrollments.map((enrollment) => <div key={enrollment.id} className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div><p className="font-medium">{enrollment.student?.display_name ?? enrollment.student?.username ?? "Student"}</p><p className="text-xs text-muted-foreground">{courses.find((course) => course.id === enrollment.course_id)?.title ?? "Course"} · {enrollment.status}</p></div>
+                    {enrollment.status === "pending" && <div className="flex gap-2"><Button size="sm" onClick={() => void updateEnrollment(enrollment, "accepted")}>Accept</Button><Button size="sm" variant="outline" onClick={() => void updateEnrollment(enrollment, "rejected")}>Decline</Button></div>}
+                  </div>)}
+                </div>
+              </section>
             )}
             {selectedCourse && (
               <section className="bento-card mt-5 p-6">

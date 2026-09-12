@@ -16,12 +16,13 @@ type Course = {
   teacher_id: string;
   repo_url?: string | null;
 };
+type Enrollment = { course_id: string; status: "pending" | "accepted" | "rejected" };
 type Lesson = { id: string; course_id: string; title: string; content: string | null; position: number; asset_path?: string | null };
 type Teacher = { user_id: string; username: string; display_name: string | null };
 
 function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [enrolled, setEnrolled] = useState<string[]>([]);
+  const [enrollments, setEnrollments] = useState<Record<string, Enrollment["status"]>>({});
   const [lessons, setLessons] = useState<Record<string, Lesson[]>>({});
   const [teachers, setTeachers] = useState<Record<string, Teacher>>({});
   const [openCourse, setOpenCourse] = useState<string | null>(null);
@@ -49,11 +50,11 @@ function CoursesPage() {
       }
       const { data: user } = await supabase.auth.getUser();
       if (user.user) {
-        const { data: rows } = await (supabase as any)
+          const { data: rows } = await (supabase as any)
           .from("course_enrollments")
-          .select("course_id")
+          .select("course_id,status")
           .eq("student_id", user.user.id);
-        setEnrolled((rows ?? []).map((row: { course_id: string }) => row.course_id));
+        setEnrollments(Object.fromEntries((rows ?? []).map((row: Enrollment) => [row.course_id, row.status])));
       }
     })();
   }, []);
@@ -62,7 +63,7 @@ function CoursesPage() {
     if (!user.user) return;
     const { error } = await (supabase as any)
       .from("course_enrollments")
-      .insert({ course_id: courseId, student_id: user.user.id });
+      .insert({ course_id: courseId, student_id: user.user.id, status: courses.find((course) => course.id === courseId)?.is_free ? "accepted" : "pending" });
     if (error && !error.message.includes("duplicate")) toast.error("Could not join course.");
     else {
       setEnrolled((items) => [...items, courseId]);
@@ -84,7 +85,7 @@ function CoursesPage() {
             <Button variant="outline">Back to app</Button>
           </Link>
         </div>
-        {enrolled.length > 0 && (
+        {Object.keys(enrollments).length > 0 && (
           <section className="mb-8">
             <div className="mb-4 flex items-center gap-3">
               <PlayCircle className="text-primary" />
@@ -94,7 +95,7 @@ function CoursesPage() {
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              {courses.filter((course) => enrolled.includes(course.id)).map((course) => (
+              {courses.filter((course) => enrollments[course.id] === "accepted").map((course) => (
                 <article key={`enrolled-${course.id}`} className="bento-card flex flex-col items-stretch justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
                   <div>
                     <p className="text-xs font-medium text-primary">ENROLLED</p>
@@ -157,9 +158,9 @@ function CoursesPage() {
                 </div>
                 <Button
                   onClick={() => void enroll(course.id)}
-                  disabled={enrolled.includes(course.id)}
+                  disabled={Boolean(enrollments[course.id])}
                 >
-                  {enrolled.includes(course.id) ? (
+                  {enrollments[course.id] ? (
                     <>
                       <CheckCircle2 data-icon="inline-start" />
                       Enrolled
