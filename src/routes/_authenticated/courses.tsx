@@ -1,12 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, CheckCircle2 } from "lucide-react";
+import { BookOpen, CheckCircle2, LockKeyhole, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/courses")({ component: CoursesPage });
-type Course = { id: string; title: string; description: string; level: string };
+type Course = {
+  id: string;
+  title: string;
+  description: string;
+  level: string;
+  is_free: boolean;
+  price: number;
+};
 
 function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -15,7 +22,7 @@ function CoursesPage() {
     void (async () => {
       const { data } = await supabase
         .from("courses")
-        .select("id,title,description,level")
+        .select("id,title,description,level,is_free,price")
         .eq("published", true)
         .order("created_at", { ascending: false });
       setCourses((data ?? []) as Course[]);
@@ -56,6 +63,30 @@ function CoursesPage() {
             <Button variant="outline">Back to app</Button>
           </Link>
         </div>
+        {enrolled.length > 0 && (
+          <section className="mb-8">
+            <div className="mb-4 flex items-center gap-3">
+              <PlayCircle className="text-primary" />
+              <div>
+                <h2 className="font-display text-2xl font-semibold">My enrolled courses</h2>
+                <p className="text-sm text-muted-foreground">Pick up where you left off.</p>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {courses.filter((course) => enrolled.includes(course.id)).map((course) => (
+                <article key={`enrolled-${course.id}`} className="bento-card flex items-center justify-between gap-4 p-5">
+                  <div>
+                    <p className="text-xs font-medium text-primary">ENROLLED</p>
+                    <h3 className="mt-1 font-display text-xl font-semibold">{course.title}</h3>
+                  </div>
+                  <Button variant="secondary" onClick={() => toast.info("Course lessons are ready in the next lesson view.")}>
+                    Continue
+                  </Button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
         {courses.length === 0 ? (
           <div className="bento-card p-12 text-center">
             <BookOpen className="mx-auto mb-3 text-primary" />
@@ -72,6 +103,13 @@ function CoursesPage() {
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {course.description}
                   </p>
+                  <div className="mt-4 flex items-center gap-2 text-sm font-medium">
+                    {course.is_free ? (
+                      <span className="text-primary">Free</span>
+                    ) : (
+                      <><LockKeyhole className="size-4 text-primary" /> ${Number(course.price || 0).toFixed(2)}</>
+                    )}
+                  </div>
                 </div>
                 <Button
                   onClick={() => void enroll(course.id)}

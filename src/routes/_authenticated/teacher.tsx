@@ -9,12 +9,22 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/teacher")({ component: TeacherDashboard });
 
-type Course = { id: string; title: string; description: string; level: string; published: boolean };
+type Course = {
+  id: string;
+  title: string;
+  description: string;
+  level: string;
+  published: boolean;
+  is_free: boolean;
+  price: number;
+};
 
 function TeacherDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [isFree, setIsFree] = useState(true);
+  const [price, setPrice] = useState("0");
   const [busy, setBusy] = useState(false);
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonContent, setLessonContent] = useState("");
@@ -24,7 +34,7 @@ function TeacherDashboard() {
   const loadCourses = async () => {
     const { data, error } = await supabase
       .from("courses")
-      .select("id,title,description,level,published")
+      .select("id,title,description,level,published,is_free,price")
       .order("created_at", { ascending: false });
     if (error) toast.error("Could not load courses.");
     else setCourses((data ?? []) as Course[]);
@@ -43,6 +53,8 @@ function TeacherDashboard() {
       teacher_id: userData.user?.id,
       title: title.trim(),
       description: description.trim(),
+      is_free: isFree,
+      price: isFree ? 0 : Math.max(0, Number(price) || 0),
     });
     setBusy(false);
     if (error) return toast.error("Could not create course. Apply the teaching migration first.");
@@ -166,6 +178,19 @@ function TeacherDashboard() {
                   placeholder="What will students build?"
                 />
               </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div>
+                  <Label htmlFor="course-paid">Paid course</Label>
+                  <p className="text-xs text-muted-foreground">Turn this off to offer it free.</p>
+                </div>
+                <input id="course-paid" type="checkbox" checked={!isFree} onChange={(e) => setIsFree(!e.target.checked)} className="h-4 w-4 accent-primary" />
+              </div>
+              {!isFree && (
+                <div>
+                  <Label htmlFor="course-price">Price</Label>
+                  <Input id="course-price" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="49.00" />
+                </div>
+              )}
               <Button disabled={busy}>{busy ? "Creating…" : "Create draft"}</Button>
             </form>
           </section>
