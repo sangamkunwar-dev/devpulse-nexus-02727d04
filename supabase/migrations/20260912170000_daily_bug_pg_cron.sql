@@ -13,7 +13,7 @@ select cron.schedule(
   '* * * * *',
   $$
   select net.http_post(
-    url := 'https://YOUR-DOMAIN.vercel.app/api/cron/daily-bug',
+    url := 'https://devpulse.sangamkunwar.com.np/api/cron/daily-bug',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer YOUR_CRON_SECRET'
