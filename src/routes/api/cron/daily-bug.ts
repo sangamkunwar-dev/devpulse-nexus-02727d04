@@ -4,7 +4,9 @@ import { publishDailyBug } from "@/lib/challenges.functions";
 function isAuthorized(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
-  return request.headers.get("authorization") === `Bearer ${secret}`;
+  const authorization = request.headers.get("authorization");
+  const vercelCron = request.headers.get("x-vercel-cron");
+  return authorization === `Bearer ${secret}` || vercelCron === "1";
 }
 
 function getLocalDateAndTime(timeZone: string) {
@@ -51,7 +53,9 @@ export const Route = createFileRoute("/api/cron/daily-bug")({
         }
 
         const scheduledTime = settings.publish_time.slice(0, 5);
-        if (local.time !== scheduledTime) {
+        // Vercel Cron can arrive a few minutes late. Publish once the scheduled
+        // minute has passed; publishDailyBug's date check keeps this idempotent.
+        if (local.time < scheduledTime) {
           return Response.json({ skipped: true, date: local.date, time: local.time, scheduledTime });
         }
 
