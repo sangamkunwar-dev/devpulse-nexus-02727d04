@@ -18,6 +18,7 @@ import {
   Shield,
   History,
   ScrollText,
+  GraduationCap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useProfile } from "@/hooks/useSession";
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/courses", label: "Courses", icon: GraduationCap },
   { to: "/notes", label: "DevNotes", icon: NotebookPen },
   { to: "/snippets", label: "Snippets", icon: Code2 },
   { to: "/projects", label: "Projects", icon: FolderKanban },
@@ -54,7 +56,11 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
       return !!data;
     },
   });
-  const nav = isAdmin ? [...NAV, ...ADMIN_ITEMS] : NAV;
+  const teacherItems =
+    (profile as { role?: string } | undefined)?.role === "teacher"
+      ? [{ to: "/teacher", label: "Teacher Studio", icon: GraduationCap }]
+      : [];
+  const nav = isAdmin ? [...NAV, ...teacherItems, ...ADMIN_ITEMS] : [...NAV, ...teacherItems];
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
