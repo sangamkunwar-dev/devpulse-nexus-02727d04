@@ -185,6 +185,14 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
               <Command className="h-3 w-3" /> Search & commands
               <kbd className="kbd-chip">⌘K</kbd>
             </button>
+            <button
+              onClick={signOut}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive"
+              aria-label="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
           </div>
         </header>
         <main className="flex-1 px-4 py-6 lg:px-8">{children}</main>
