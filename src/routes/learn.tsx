@@ -108,7 +108,7 @@ function LearnPage() {
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
           Four curated paths built from the best free resources on the internet. Pair them with
-          DevNotes, Daily Bugs and peer reviews inside your workspace.
+          DevNotes, courses and peer reviews inside your workspace.
         </p>
       </section>
 

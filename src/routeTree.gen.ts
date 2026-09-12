@@ -19,10 +19,8 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
-import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
 import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticated/courses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/notes'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -33,7 +31,6 @@ import { Route as AuthenticatedTeacherRouteImport } from './routes/_authenticate
 import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
 import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
-import { Route as ApiCronDailyBugRouteImport } from './routes/api/cron/daily-bug'
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
 import { Route as ApiTeacherFileRouteImport } from './routes/api/teacher/file'
 import { Route as ApiTeacherUploadRouteImport } from './routes/api/teacher/upload'
@@ -87,11 +84,6 @@ const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedChallengesRoute = AuthenticatedChallengesRouteImport.update({
-  id: '/challenges',
-  path: '/challenges',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedCoursesRoute = AuthenticatedCoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
@@ -100,11 +92,6 @@ const AuthenticatedCoursesRoute = AuthenticatedCoursesRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLeaderboardRoute =
@@ -159,11 +146,6 @@ const AuthenticatedReviewsIdRoute = AuthenticatedReviewsIdRouteImport.update({
   path: '/reviews/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ApiCronDailyBugRoute = ApiCronDailyBugRouteImport.update({
-  id: '/api/cron/daily-bug',
-  path: '/api/cron/daily-bug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicNotifyRoute = ApiPublicNotifyRouteImport.update({
   id: '/api/public/notify',
   path: '/api/public/notify',
@@ -190,10 +172,8 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/audit': typeof AuthenticatedAuditRoute
-  '/challenges': typeof AuthenticatedChallengesRoute
   '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/history': typeof AuthenticatedHistoryRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -203,7 +183,6 @@ export interface FileRoutesByFullPath {
   '/teacher': typeof AuthenticatedTeacherRoute
   '/u/$username': typeof UUsernameRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
-  '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -219,10 +198,8 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/audit': typeof AuthenticatedAuditRoute
-  '/challenges': typeof AuthenticatedChallengesRoute
   '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/history': typeof AuthenticatedHistoryRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -232,7 +209,6 @@ export interface FileRoutesByTo {
   '/teacher': typeof AuthenticatedTeacherRoute
   '/u/$username': typeof UUsernameRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
-  '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -250,10 +226,8 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/audit': typeof AuthenticatedAuditRoute
-  '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
   '/_authenticated/courses': typeof AuthenticatedCoursesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/notes': typeof AuthenticatedNotesRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -263,7 +237,6 @@ export interface FileRoutesById {
   '/_authenticated/teacher': typeof AuthenticatedTeacherRoute
   '/u/$username': typeof UUsernameRoute
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
-  '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -281,10 +254,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin'
     | '/audit'
-    | '/challenges'
     | '/courses'
     | '/dashboard'
-    | '/history'
     | '/leaderboard'
     | '/notes'
     | '/onboarding'
@@ -294,7 +265,6 @@ export interface FileRouteTypes {
     | '/teacher'
     | '/u/$username'
     | '/reviews/$id'
-    | '/api/cron/daily-bug'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -310,10 +280,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin'
     | '/audit'
-    | '/challenges'
     | '/courses'
     | '/dashboard'
-    | '/history'
     | '/leaderboard'
     | '/notes'
     | '/onboarding'
@@ -323,7 +291,6 @@ export interface FileRouteTypes {
     | '/teacher'
     | '/u/$username'
     | '/reviews/$id'
-    | '/api/cron/daily-bug'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -340,10 +307,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/admin'
     | '/_authenticated/audit'
-    | '/_authenticated/challenges'
     | '/_authenticated/courses'
     | '/_authenticated/dashboard'
-    | '/_authenticated/history'
     | '/_authenticated/leaderboard'
     | '/_authenticated/notes'
     | '/_authenticated/onboarding'
@@ -353,7 +318,6 @@ export interface FileRouteTypes {
     | '/_authenticated/teacher'
     | '/u/$username'
     | '/_authenticated/reviews/$id'
-    | '/api/cron/daily-bug'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -370,7 +334,6 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   UUsernameRoute: typeof UUsernameRoute
-  ApiCronDailyBugRoute: typeof ApiCronDailyBugRoute
   ApiPublicNotifyRoute: typeof ApiPublicNotifyRoute
   ApiTeacherFileRoute: typeof ApiTeacherFileRoute
   ApiTeacherUploadRoute: typeof ApiTeacherUploadRoute
@@ -448,13 +411,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/challenges': {
-      id: '/_authenticated/challenges'
-      path: '/challenges'
-      fullPath: '/challenges'
-      preLoaderRoute: typeof AuthenticatedChallengesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/courses': {
       id: '/_authenticated/courses'
       path: '/courses'
@@ -467,13 +423,6 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/history': {
-      id: '/_authenticated/history'
-      path: '/history'
-      fullPath: '/history'
-      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leaderboard': {
@@ -546,13 +495,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReviewsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/cron/daily-bug': {
-      id: '/api/cron/daily-bug'
-      path: '/api/cron/daily-bug'
-      fullPath: '/api/cron/daily-bug'
-      preLoaderRoute: typeof ApiCronDailyBugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/notify': {
       id: '/api/public/notify'
       path: '/api/public/notify'
@@ -580,10 +522,8 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
-  AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
   AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedNotesRoute: typeof AuthenticatedNotesRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -598,10 +538,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAuditRoute: AuthenticatedAuditRoute,
-  AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
   AuthenticatedCoursesRoute: AuthenticatedCoursesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedNotesRoute: AuthenticatedNotesRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
@@ -626,7 +564,6 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   UUsernameRoute: UUsernameRoute,
-  ApiCronDailyBugRoute: ApiCronDailyBugRoute,
   ApiPublicNotifyRoute: ApiPublicNotifyRoute,
   ApiTeacherFileRoute: ApiTeacherFileRoute,
   ApiTeacherUploadRoute: ApiTeacherUploadRoute,

@@ -44,10 +44,6 @@ function TermsPage() {
           <p>You retain ownership of notes, snippets, projects, and comments you create ("Your Content"). You grant DevPulse a worldwide, non-exclusive licence to host, display, and back up Your Content solely to operate the Service. Public content (public profiles, portfolios, review threads) is visible to everyone.</p>
         </section>
         <section>
-          <h2 className="text-lg font-semibold text-foreground">5. Daily Bug Challenges</h2>
-          <p>Challenges, XP, and leaderboard rankings are provided as-is for learning and fun. Rankings can be reset or adjusted for fairness or to correct exploits.</p>
-        </section>
-        <section>
           <h2 className="text-lg font-semibold text-foreground">6. Termination</h2>
           <p>We may suspend or terminate accounts that violate these terms. You may delete your account at any time from Settings; deletion is permanent.</p>
         </section>

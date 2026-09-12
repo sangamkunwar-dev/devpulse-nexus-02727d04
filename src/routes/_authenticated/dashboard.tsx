@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import {
-  Bug,
   NotebookPen,
   Code2,
   GitPullRequest,
@@ -23,10 +22,6 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function DashboardPage() {
   const navigate = useNavigate();
   const { userId } = useSession();
@@ -42,29 +37,13 @@ function DashboardPage() {
     queryKey: ["dashboard", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const [challenge, notes, snippets, reviews, leaders, myAttempt] = await Promise.all([
-        supabase.from("challenges").select("id, title, language, difficulty, xp_reward").eq("challenge_date", todayISO()).maybeSingle(),
+      const [notes, snippets, reviews, leaders] = await Promise.all([
         supabase.from("notes").select("id", { count: "exact", head: true }).eq("user_id", userId!).eq("is_deleted", false),
         supabase.from("snippets").select("id", { count: "exact", head: true }).eq("user_id", userId!),
         supabase.from("review_requests").select("id, title, language, status, created_at").order("created_at", { ascending: false }).limit(4),
         supabase.from("profiles").select("username, display_name, xp").order("xp", { ascending: false }).limit(5),
-        null,
       ]);
-      let solvedToday = false;
-      if (challenge.data) {
-        const { data: attempts } = await supabase
-          .from("challenge_attempts")
-          .select("is_correct")
-          .eq("challenge_id", challenge.data.id)
-          .eq("user_id", userId!)
-          .eq("is_correct", true)
-          .limit(1);
-        solvedToday = (attempts?.length ?? 0) > 0;
-      }
-      void myAttempt;
       return {
-        challenge: challenge.data,
-        solvedToday,
         notesCount: notes.count ?? 0,
         snippetsCount: snippets.count ?? 0,
         reviews: reviews.data ?? [],
@@ -115,40 +94,6 @@ function DashboardPage() {
             <p className="mt-2 font-mono text-xs text-muted-foreground">
               {xp} XP · {toNext} to next level
             </p>
-          </motion.div>
-
-          {/* Daily bug */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="bento-card relative overflow-hidden p-6 md:col-span-4"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Today's Daily Bug</span>
-              <Bug className="h-4 w-4 text-primary" />
-            </div>
-            {stats?.challenge ? (
-              <>
-                <h3 className="mt-3 font-display text-xl font-semibold">{stats.challenge.title}</h3>
-                <div className="mt-2 flex items-center gap-2">
-                  <Badge variant="secondary">{stats.challenge.language}</Badge>
-                  <Badge variant="accent" className="capitalize">{stats.challenge.difficulty}</Badge>
-                  <Badge>+{stats.challenge.xp_reward} XP</Badge>
-                  {stats.solvedToday && <Badge variant="outline">✓ solved</Badge>}
-                </div>
-                <Link
-                  to="/challenges"
-                  className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                >
-                  {stats.solvedToday ? "Review your solve" : "Hunt the bug"} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </>
-            ) : stats ? (
-              <p className="mt-3 text-sm text-muted-foreground">No challenge published today — check the archive.</p>
-            ) : (
-              <Skeleton className="mt-3 h-16 w-2/3" />
-            )}
           </motion.div>
 
           {/* Counts */}

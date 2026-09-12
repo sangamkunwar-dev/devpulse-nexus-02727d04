@@ -4,7 +4,6 @@ import {
   Zap,
   NotebookPen,
   GitPullRequest,
-  Bug,
   Trophy,
   Command,
   LayoutGrid,
@@ -40,12 +39,6 @@ const FEATURES = [
     title: "Offline-First DevNotes",
     desc: "A Markdown editor that works with zero internet. Notes live in your browser and sync to the cloud the moment you reconnect.",
     span: "",
-  },
-  {
-    icon: Bug,
-    title: "Daily Bug Challenges",
-    desc: "One broken snippet per day — JavaScript, Python or SQL. Find the bug, patch it, earn XP, climb the global leaderboard.",
-    span: "md:col-span-2",
   },
   {
     icon: Command,
@@ -119,7 +112,7 @@ function Index() {
               Your entire dev life, <span className="text-gradient">one pulse.</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-              Offline-first notes, peer code reviews, daily bug hunts, a snippet vault and a
+              Offline-first notes, peer code reviews, courses, a snippet vault and a
               shareable bento portfolio — everything you need to learn, teach and ship.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
