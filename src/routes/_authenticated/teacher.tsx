@@ -64,7 +64,15 @@ function TeacherDashboard() {
       price: isFree ? 0 : Math.max(0, Number(price) || 0),
     });
     setBusy(false);
-    if (error) return toast.error("Could not create course. Apply the teaching migration first.");
+    if (error) {
+      const message = error.message?.toLowerCase() ?? "";
+      const needsMigration = message.includes("does not exist") || message.includes("schema cache") || message.includes("relation") || message.includes("column");
+      return toast.error(
+        needsMigration
+          ? "Courses are not set up yet. Apply the SQL below in Supabase, then try again."
+          : "Could not create course. Check your course details and try again.",
+      );
+    }
     setTitle("");
     setDescription("");
     setRepoUrl("");
@@ -140,12 +148,12 @@ function TeacherDashboard() {
   };
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground">
+    <main className="min-h-screen overflow-x-hidden bg-background px-4 py-6 text-foreground sm:px-6 sm:py-10">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-10 flex items-start justify-between gap-4">
+        <div className="mb-8 flex flex-col items-stretch justify-between gap-5 sm:mb-10 sm:flex-row sm:items-start sm:gap-4">
           <div>
             <p className="mb-2 text-sm text-primary">TEACHER STUDIO</p>
-            <h1 className="font-display text-4xl font-semibold">Teach what you know.</h1>
+            <h1 className="max-w-xl font-display text-3xl font-semibold sm:text-4xl">Teach what you know.</h1>
             <p className="mt-2 max-w-xl text-muted-foreground">
               Create free courses, share practical lessons, and help the next developer level up.
             </p>
@@ -235,7 +243,7 @@ function TeacherDashboard() {
                 {courses.map((course) => (
                   <article
                     key={course.id}
-                    className="bento-card flex items-center justify-between gap-4 p-5"
+                    className="bento-card flex flex-col items-stretch justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5"
                   >
                     <div>
                       <h3 className="font-semibold">{course.title}</h3>

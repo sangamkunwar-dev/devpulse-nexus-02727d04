@@ -70,9 +70,9 @@ function CoursesPage() {
     }
   };
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground">
+    <main className="min-h-screen overflow-x-hidden bg-background px-4 py-6 text-foreground sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-10 flex items-start justify-between">
+        <div className="mb-8 flex flex-col items-stretch justify-between gap-5 sm:mb-10 sm:flex-row sm:items-start sm:gap-4">
           <div>
             <p className="mb-2 text-sm text-primary">FREE LEARNING</p>
             <h1 className="font-display text-4xl font-semibold">Learn from the community.</h1>
@@ -95,7 +95,7 @@ function CoursesPage() {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {courses.filter((course) => enrolled.includes(course.id)).map((course) => (
-                <article key={`enrolled-${course.id}`} className="bento-card flex items-center justify-between gap-4 p-5">
+                <article key={`enrolled-${course.id}`} className="bento-card flex flex-col items-stretch justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
                   <div>
                     <p className="text-xs font-medium text-primary">ENROLLED</p>
                     <h3 className="mt-1 font-display text-xl font-semibold">{course.title}</h3>
