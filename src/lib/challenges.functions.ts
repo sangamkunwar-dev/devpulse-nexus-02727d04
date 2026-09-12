@@ -42,8 +42,8 @@ async function publishTemplateFallback(supabaseAdmin: any, date: string) {
     .order("last_used_on", { ascending: true, nullsFirst: true })
     .limit(1)
     .maybeSingle();
-  if (templateError) throw templateError;
-  if (!template) throw new Error("No challenge templates are available.");
+  if (templateError) throw new Error(`Template lookup failed: ${templateError.message}`);
+  if (!template) throw new Error("No challenge templates are available. Add one in the Admin template pool.");
 
   const { data: challenge, error: challengeError } = await supabaseAdmin
     .from("challenges")
@@ -56,7 +56,6 @@ async function publishTemplateFallback(supabaseAdmin: any, date: string) {
       broken_code: template.broken_code,
       hint: template.hint,
       xp_reward: template.xp_reward,
-      source: "template",
     })
     .select("id")
     .single();
@@ -84,22 +83,25 @@ async function publishTemplateFallback(supabaseAdmin: any, date: string) {
 export async function publishDailyBug(supabaseAdmin: any, date: string) {
   const { data: existing, error: lookupError } = await supabaseAdmin
     .from("challenges")
-    .select("id, source")
+    .select("id")
     .eq("challenge_date", date)
     .maybeSingle();
-  if (lookupError) return { challengeId: null, source: null, error: "lookup_failed" as const };
-  if (existing) return { challengeId: existing.id, source: existing.source ?? "template", error: null };
+  if (lookupError) {
+    console.error("[daily-bug] challenge lookup failed", lookupError);
+    return { challengeId: null, source: null, error: `lookup_failed: ${lookupError.message}` };
+  }
+  if (existing) return { challengeId: existing.id, source: "template" as const, error: null };
 
   try {
     const bug = await generateDailyBug(date);
     const { data: inserted, error: insertError } = await supabaseAdmin
       .from("challenges")
-      .insert({ challenge_date: date, title: bug.title, language: bug.language, difficulty: bug.difficulty, prompt: bug.prompt, broken_code: bug.broken_code, hint: bug.hint, xp_reward: bug.xp_reward, source: "ai" })
+      .insert({ challenge_date: date, title: bug.title, language: bug.language, difficulty: bug.difficulty, prompt: bug.prompt, broken_code: bug.broken_code, hint: bug.hint, xp_reward: bug.xp_reward })
       .select("id")
       .single();
     if (insertError) {
-      const { data: raced } = await supabaseAdmin.from("challenges").select("id, source").eq("challenge_date", date).maybeSingle();
-      return raced ? { challengeId: raced.id, source: raced.source ?? "template", error: null } : await publishTemplateFallback(supabaseAdmin, date);
+      const { data: raced } = await supabaseAdmin.from("challenges").select("id").eq("challenge_date", date).maybeSingle();
+      return raced ? { challengeId: raced.id, source: "template" as const, error: null } : await publishTemplateFallback(supabaseAdmin, date);
     }
     const { error: solutionError } = await supabaseAdmin.from("challenge_solutions").insert({ challenge_id: inserted.id, answer_pattern: bug.answer_pattern, explanation: bug.explanation });
     if (solutionError) {
