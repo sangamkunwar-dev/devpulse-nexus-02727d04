@@ -35,6 +35,8 @@ import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
 import { Route as ApiCronDailyBugRouteImport } from './routes/api/cron/daily-bug'
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
+import { Route as ApiTeacherFileRouteImport } from './routes/api/teacher/file'
+import { Route as ApiTeacherUploadRouteImport } from './routes/api/teacher/upload'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -167,6 +169,16 @@ const ApiPublicNotifyRoute = ApiPublicNotifyRouteImport.update({
   path: '/api/public/notify',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTeacherFileRoute = ApiTeacherFileRouteImport.update({
+  id: '/api/teacher/file',
+  path: '/api/teacher/file',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTeacherUploadRoute = ApiTeacherUploadRouteImport.update({
+  id: '/api/teacher/upload',
+  path: '/api/teacher/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -193,6 +205,8 @@ export interface FileRoutesByFullPath {
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
+  '/api/teacher/file': typeof ApiTeacherFileRoute
+  '/api/teacher/upload': typeof ApiTeacherUploadRoute
   '/reviews/': typeof AuthenticatedReviewsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -220,6 +234,8 @@ export interface FileRoutesByTo {
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
+  '/api/teacher/file': typeof ApiTeacherFileRoute
+  '/api/teacher/upload': typeof ApiTeacherUploadRoute
   '/reviews': typeof AuthenticatedReviewsIndexRoute
 }
 export interface FileRoutesById {
@@ -249,6 +265,8 @@ export interface FileRoutesById {
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
+  '/api/teacher/file': typeof ApiTeacherFileRoute
+  '/api/teacher/upload': typeof ApiTeacherUploadRoute
   '/_authenticated/reviews/': typeof AuthenticatedReviewsIndexRoute
 }
 export interface FileRouteTypes {
@@ -278,6 +296,8 @@ export interface FileRouteTypes {
     | '/reviews/$id'
     | '/api/cron/daily-bug'
     | '/api/public/notify'
+    | '/api/teacher/file'
+    | '/api/teacher/upload'
     | '/reviews/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -305,6 +325,8 @@ export interface FileRouteTypes {
     | '/reviews/$id'
     | '/api/cron/daily-bug'
     | '/api/public/notify'
+    | '/api/teacher/file'
+    | '/api/teacher/upload'
     | '/reviews'
   id:
     | '__root__'
@@ -333,6 +355,8 @@ export interface FileRouteTypes {
     | '/_authenticated/reviews/$id'
     | '/api/cron/daily-bug'
     | '/api/public/notify'
+    | '/api/teacher/file'
+    | '/api/teacher/upload'
     | '/_authenticated/reviews/'
   fileRoutesById: FileRoutesById
 }
@@ -348,6 +372,8 @@ export interface RootRouteChildren {
   UUsernameRoute: typeof UUsernameRoute
   ApiCronDailyBugRoute: typeof ApiCronDailyBugRoute
   ApiPublicNotifyRoute: typeof ApiPublicNotifyRoute
+  ApiTeacherFileRoute: typeof ApiTeacherFileRoute
+  ApiTeacherUploadRoute: typeof ApiTeacherUploadRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -534,6 +560,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicNotifyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/teacher/file': {
+      id: '/api/teacher/file'
+      path: '/api/teacher/file'
+      fullPath: '/api/teacher/file'
+      preLoaderRoute: typeof ApiTeacherFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/teacher/upload': {
+      id: '/api/teacher/upload'
+      path: '/api/teacher/upload'
+      fullPath: '/api/teacher/upload'
+      preLoaderRoute: typeof ApiTeacherUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -588,6 +628,8 @@ const rootRouteChildren: RootRouteChildren = {
   UUsernameRoute: UUsernameRoute,
   ApiCronDailyBugRoute: ApiCronDailyBugRoute,
   ApiPublicNotifyRoute: ApiPublicNotifyRoute,
+  ApiTeacherFileRoute: ApiTeacherFileRoute,
+  ApiTeacherUploadRoute: ApiTeacherUploadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, GraduationCap, Plus, Users } from "lucide-react";
+import { BookOpen, FileUp, GraduationCap, Plus, Video } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -16,6 +16,10 @@ function TeacherDashboard() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
+  const [lessonTitle, setLessonTitle] = useState("");
+  const [lessonContent, setLessonContent] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [lessonBusy, setLessonBusy] = useState(false);
 
   const loadCourses = async () => {
     const { data, error } = await supabase
@@ -46,6 +50,59 @@ function TeacherDashboard() {
     setDescription("");
     await loadCourses();
     toast.success("Course created as a draft.");
+  };
+
+  const addLesson = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedCourse || !lessonTitle.trim())
+      return toast.error("Choose a course and add a lesson title.");
+    setLessonBusy(true);
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase.from("course_lessons").insert({
+      course_id: selectedCourse,
+      title: lessonTitle.trim(),
+      content: lessonContent.trim(),
+      position: 1,
+    });
+    setLessonBusy(false);
+    if (error) return toast.error("Could not add lesson. Apply the course SQL first.");
+    setLessonTitle("");
+    setLessonContent("");
+    toast.success(`Lesson added for ${userData.user?.email ?? "your students"}.`);
+  };
+
+  const uploadLessonFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedCourse) return;
+    setLessonBusy(true);
+    const { data } = await supabase.auth.getSession();
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("courseId", selectedCourse);
+    const response = await fetch("/api/teacher/upload", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` },
+      body: formData,
+    });
+    const result = (await response.json()) as {
+      pathname?: string;
+      filename?: string;
+      contentType?: string;
+      error?: string;
+    };
+    setLessonBusy(false);
+    if (!response.ok || !result.pathname) return toast.error(result.error ?? "Upload failed.");
+    const { error } = await supabase.from("course_lessons").insert({
+      course_id: selectedCourse,
+      title: result.filename ?? file.name,
+      content: "Uploaded lesson resource",
+      position: 1,
+      asset_path: result.pathname,
+      asset_name: result.filename ?? file.name,
+      asset_content_type: result.contentType ?? file.type,
+    });
+    if (error) return toast.error("File uploaded, but lesson could not be saved.");
+    toast.success("File added as a lesson resource.");
   };
 
   const togglePublished = async (course: Course) => {
@@ -145,16 +202,65 @@ function TeacherDashboard() {
                         {course.description || "No description yet"}
                       </p>
                     </div>
-                    <Button
-                      variant={course.published ? "secondary" : "outline"}
-                      size="sm"
-                      onClick={() => void togglePublished(course)}
-                    >
-                      {course.published ? "Published" : "Publish"}
-                    </Button>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedCourse(course.id)}
+                      >
+                        Add content
+                      </Button>
+                      <Button
+                        variant={course.published ? "secondary" : "outline"}
+                        size="sm"
+                        onClick={() => void togglePublished(course)}
+                      >
+                        {course.published ? "Published" : "Publish"}
+                      </Button>
+                    </div>
                   </article>
                 ))}
               </div>
+            )}
+            {selectedCourse && (
+              <section className="bento-card mt-5 p-6">
+                <div className="mb-4 flex items-center gap-3">
+                  <Video className="text-primary" />
+                  <div>
+                    <h3 className="font-display text-lg font-semibold">Build course content</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Add text lessons, PDFs, slides, audio, or videos.
+                    </p>
+                  </div>
+                </div>
+                <form onSubmit={addLesson} className="flex flex-col gap-3">
+                  <Input
+                    value={lessonTitle}
+                    onChange={(event) => setLessonTitle(event.target.value)}
+                    placeholder="Lesson title"
+                  />
+                  <Textarea
+                    value={lessonContent}
+                    onChange={(event) => setLessonContent(event.target.value)}
+                    placeholder="Lesson notes or instructions"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button disabled={lessonBusy}>{lessonBusy ? "Saving…" : "Add lesson"}</Button>
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted">
+                      <FileUp /> Upload file or video
+                      <input
+                        type="file"
+                        accept="video/*,audio/*,.pdf,.ppt,.pptx,.doc,.docx,.zip"
+                        className="sr-only"
+                        onChange={(event) => void uploadLessonFile(event)}
+                      />
+                    </label>
+                    <Button type="button" variant="ghost" onClick={() => setSelectedCourse(null)}>
+                      Close
+                    </Button>
+                  </div>
+                </form>
+              </section>
             )}
           </section>
         </div>
