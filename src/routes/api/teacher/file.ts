@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/teacher/file")({
         if (!result) return new Response("Not found", { status: 404 });
         return new Response(result.stream, {
           headers: {
-            "Content-Type": result.blob.contentType,
+            "Content-Type": result.blob.contentType ?? "application/octet-stream",
             "Cache-Control": "private, no-cache",
             ETag: result.blob.etag,
           },

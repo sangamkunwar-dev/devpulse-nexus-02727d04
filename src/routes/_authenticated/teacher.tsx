@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, FileUp, GraduationCap, Plus, Video } from "lucide-react";
+import { BookOpen, FileUp, Github, GraduationCap, Plus, Video } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -23,6 +23,7 @@ function TeacherDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [repoUrl, setRepoUrl] = useState("");
   const [isFree, setIsFree] = useState(true);
   const [price, setPrice] = useState("0");
   const [busy, setBusy] = useState(false);
@@ -30,9 +31,10 @@ function TeacherDashboard() {
   const [lessonContent, setLessonContent] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [lessonBusy, setLessonBusy] = useState(false);
+  const [uploadBusy, setUploadBusy] = useState(false);
 
   const loadCourses = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("courses")
       .select("id,title,description,level,published,is_free,price")
       .order("created_at", { ascending: false });
@@ -49,10 +51,11 @@ function TeacherDashboard() {
     if (!title.trim()) return toast.error("Add a course title.");
     setBusy(true);
     const { data: userData } = await supabase.auth.getUser();
-    const { error } = await supabase.from("courses").insert({
+    const { error } = await (supabase as any).from("courses").insert({
       teacher_id: userData.user?.id,
       title: title.trim(),
       description: description.trim(),
+      repo_url: repoUrl.trim() || null,
       is_free: isFree,
       price: isFree ? 0 : Math.max(0, Number(price) || 0),
     });
@@ -60,6 +63,7 @@ function TeacherDashboard() {
     if (error) return toast.error("Could not create course. Apply the teaching migration first.");
     setTitle("");
     setDescription("");
+    setRepoUrl("");
     await loadCourses();
     toast.success("Course created as a draft.");
   };
@@ -70,7 +74,7 @@ function TeacherDashboard() {
       return toast.error("Choose a course and add a lesson title.");
     setLessonBusy(true);
     const { data: userData } = await supabase.auth.getUser();
-    const { error } = await supabase.from("course_lessons").insert({
+    const { error } = await (supabase as any).from("course_lessons").insert({
       course_id: selectedCourse,
       title: lessonTitle.trim(),
       content: lessonContent.trim(),
@@ -86,7 +90,7 @@ function TeacherDashboard() {
   const uploadLessonFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedCourse) return;
-    setLessonBusy(true);
+    setUploadBusy(true);
     const { data } = await supabase.auth.getSession();
     const formData = new FormData();
     formData.append("file", file);
@@ -102,9 +106,9 @@ function TeacherDashboard() {
       contentType?: string;
       error?: string;
     };
-    setLessonBusy(false);
+    setUploadBusy(false);
     if (!response.ok || !result.pathname) return toast.error(result.error ?? "Upload failed.");
-    const { error } = await supabase.from("course_lessons").insert({
+    const { error } = await (supabase as any).from("course_lessons").insert({
       course_id: selectedCourse,
       title: result.filename ?? file.name,
       content: "Uploaded lesson resource",
@@ -118,7 +122,7 @@ function TeacherDashboard() {
   };
 
   const togglePublished = async (course: Course) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("courses")
       .update({ published: !course.published })
       .eq("id", course.id);
@@ -177,6 +181,14 @@ function TeacherDashboard() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="What will students build?"
                 />
+              </div>
+              <div>
+                <Label htmlFor="course-repository">GitHub repository</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  <Github className="size-4 text-muted-foreground" />
+                  <Input id="course-repository" value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} placeholder="https://github.com/you/project" type="url" />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">Share the starter code or project repository with students.</p>
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border p-3">
                 <div>
@@ -272,7 +284,7 @@ function TeacherDashboard() {
                   <div className="flex flex-wrap gap-2">
                     <Button disabled={lessonBusy}>{lessonBusy ? "Saving…" : "Add lesson"}</Button>
                     <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted">
-                      <FileUp /> Upload file or video
+                      <FileUp /> {uploadBusy ? "Uploading…" : "Upload file or video"}
                       <input
                         type="file"
                         accept="video/*,audio/*,.pdf,.ppt,.pptx,.doc,.docx,.zip"

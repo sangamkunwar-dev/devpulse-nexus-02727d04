@@ -38,7 +38,6 @@ function AuthPage() {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/dashboard`,
-          data: { role },
         },
       });
 
