@@ -5,8 +5,7 @@ function isAuthorized(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
   const authorization = request.headers.get("authorization");
-  const vercelCron = request.headers.get("x-vercel-cron");
-  return authorization === `Bearer ${secret}` || vercelCron === "1";
+  return authorization === `Bearer ${secret}`;
 }
 
 function getLocalDateAndTime(timeZone: string) {
@@ -53,8 +52,8 @@ export const Route = createFileRoute("/api/cron/daily-bug")({
         }
 
         const scheduledTime = settings.publish_time.slice(0, 5);
-        // Vercel Cron can arrive a few minutes late. Publish once the scheduled
-        // minute has passed; publishDailyBug's date check keeps this idempotent.
+        // Supabase pg_cron may arrive a few minutes late. Publish once the
+        // scheduled minute has passed; the date check keeps this idempotent.
         if (local.time < scheduledTime) {
           return Response.json({ skipped: true, date: local.date, time: local.time, scheduledTime });
         }
