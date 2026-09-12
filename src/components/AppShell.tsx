@@ -56,10 +56,11 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
       return !!data;
     },
   });
-  const teacherItems =
-    (profile as { role?: string } | undefined)?.role === "teacher"
-      ? [{ to: "/teacher", label: "Teacher Studio", icon: GraduationCap }]
-      : [];
+  const teacherItems = ["teacher", "developer"].includes(
+    (profile as { role?: string } | undefined)?.role ?? "",
+  )
+    ? [{ to: "/teacher", label: "Teacher Studio", icon: GraduationCap }]
+    : [];
   const nav = isAdmin ? [...NAV, ...teacherItems, ...ADMIN_ITEMS] : [...NAV, ...teacherItems];
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });

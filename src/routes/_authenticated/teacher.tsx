@@ -51,8 +51,12 @@ function TeacherDashboard() {
     if (!title.trim()) return toast.error("Add a course title.");
     setBusy(true);
     const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      setBusy(false);
+      return toast.error("Your session has expired. Please sign in again.");
+    }
     const { error } = await (supabase as any).from("courses").insert({
-      teacher_id: userData.user?.id,
+      teacher_id: userData.user.id,
       title: title.trim(),
       description: description.trim(),
       repo_url: repoUrl.trim() || null,
