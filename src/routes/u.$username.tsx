@@ -36,7 +36,7 @@ function PortfolioPage() {
       if (error) throw error;
       if (!profile) return null;
 
-      const [snippetsRes, projectsRes] = await Promise.all([
+      const [snippetsRes, projectsRes, followCountsRes] = await Promise.all([
         supabase
           .from("snippets")
           .select("id, title, language, code, description, tags")
@@ -51,11 +51,13 @@ function PortfolioPage() {
           .eq("is_public", true)
           .order("created_at", { ascending: false })
           .limit(6),
+        supabase.rpc("get_follow_counts", { profile_user_id: profile.user_id }),
       ]);
       return {
         profile,
         snippets: snippetsRes.data ?? [],
         projects: projectsRes.data ?? [],
+        followCounts: followCountsRes.data?.[0] ?? { followers_count: 0, following_count: 0 },
       };
     },
   });
@@ -85,7 +87,7 @@ function PortfolioPage() {
     );
   }
 
-  const { profile, snippets, projects } = data;
+  const { profile, snippets, projects, followCounts } = data;
   const { level } = levelFromXp(profile.xp);
 
   return (
@@ -122,6 +124,14 @@ function PortfolioPage() {
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{profile.bio}</p>
             )}
             <div className="mt-4 flex flex-wrap gap-2">
+              <div className="rounded-lg border border-border bg-secondary/40 px-3 py-2 text-center">
+                <p className="font-display text-lg font-bold">{followCounts.followers_count}</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Followers</p>
+              </div>
+              <div className="rounded-lg border border-border bg-secondary/40 px-3 py-2 text-center">
+                <p className="font-display text-lg font-bold">{followCounts.following_count}</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Following</p>
+              </div>
               <Badge variant="secondary" className="capitalize">{profile.role}</Badge>
               <Badge variant="secondary" className="capitalize">{profile.skill_level}</Badge>
               {profile.github_username && (

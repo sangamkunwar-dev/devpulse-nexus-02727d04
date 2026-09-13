@@ -31,6 +31,7 @@ export function CommandPalette() {
     { user_id: string; username: string | null; display_name: string | null; avatar_url: string | null; is_following: boolean }[]
   >([]);
   const [personSearch, setPersonSearch] = useState("");
+  const [peopleSearchError, setPeopleSearchError] = useState<string | null>(null);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -61,8 +62,14 @@ export function CommandPalette() {
       setPeople([]);
       return;
     }
+    setPeopleSearchError(null);
     const timer = window.setTimeout(async () => {
-      const { data } = await supabase.rpc("search_users", { search_term: term });
+      const { data, error } = await supabase.rpc("search_users", { search_term: term });
+      if (error) {
+        setPeople([]);
+        setPeopleSearchError("Apply the follow-search migration in Supabase to search users.");
+        return;
+      }
       setPeople((data as typeof people) ?? []);
     }, 250);
     return () => window.clearTimeout(timer);
@@ -118,9 +125,13 @@ export function CommandPalette() {
         <kbd className="kbd-chip">esc</kbd>
       </div>
       <Command.List className="max-h-80 overflow-y-auto p-2 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-item]]:flex [&_[cmdk-item]]:cursor-pointer [&_[cmdk-item]]:items-center [&_[cmdk-item]]:gap-2.5 [&_[cmdk-item]]:rounded-lg [&_[cmdk-item]]:px-2.5 [&_[cmdk-item]]:py-2 [&_[cmdk-item]]:text-sm [&_[cmdk-item][data-selected=true]]:bg-secondary">
-        <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
-          No results found.
-        </Command.Empty>
+        {peopleSearchError && personSearch.trim().length >= 2 ? (
+          <p className="px-3 py-4 text-center text-xs text-destructive">{peopleSearchError}</p>
+        ) : (
+          <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
+            No results found.
+          </Command.Empty>
+        )}
 
         {session && personSearch.trim().length >= 2 && people.length > 0 && (
           <Command.Group heading="People to follow">
