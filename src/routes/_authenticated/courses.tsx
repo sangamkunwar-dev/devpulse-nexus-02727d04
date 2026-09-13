@@ -26,6 +26,7 @@ function CoursesPage() {
   const [enrollments, setEnrollments] = useState<Record<string, Enrollment["status"]>>({});
   const [lessons, setLessons] = useState<Record<string, Lesson[]>>({});
   const [teachers, setTeachers] = useState<Record<string, Teacher>>({});
+  const [joiningCourseId, setJoiningCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -91,24 +92,40 @@ function CoursesPage() {
   }, []);
 
   const enroll = async (courseId: string) => {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return;
-    const selectedCourse = courses.find((course) => course.id === courseId);
-    if (selectedCourse && !selectedCourse.is_free) {
-      const { data: session } = await supabase.auth.getSession();
-      const response = await fetch("/api/payments/stripe-checkout", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.session?.access_token ?? ""}` }, body: JSON.stringify({ courseId }) });
-      const result = await response.json() as { url?: string; error?: string };
-      if (!response.ok || !result.url) return toast.error(result.error ?? "Could not start checkout.");
-      window.location.assign(result.url);
-      return;
-    }
+    if (joiningCourseId) return;
+    setJoiningCourseId(courseId);
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
+        toast.error("Please sign in before joining a course.");
+        return;
+      }
+      const selectedCourse = courses.find((course) => course.id === courseId);
+      if (selectedCourse && !selectedCourse.is_free) {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session.session?.access_token) {
+          toast.error("Your session expired. Please sign in again.");
+          return;
+        }
+        const response = await fetch("/api/payments/stripe-checkout", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.session.access_token}` }, body: JSON.stringify({ courseId }) });
+        const result = await response.json().catch(() => ({})) as { url?: string; error?: string };
+        if (!response.ok || !result.url) {
+          toast.error(result.error ?? `Checkout could not start (${response.status}).`);
+          return;
+        }
+        window.location.href = result.url;
+        return;
+      }
     const { error } = await (supabase as any)
       .from("course_enrollments")
       .insert({ course_id: courseId, student_id: user.user.id, status: "accepted" });
-    if (error && !error.message.includes("duplicate")) toast.error("Could not join course.");
-    else {
-      setEnrollments((items) => ({ ...items, [courseId]: courses.find((course) => course.id === courseId)?.is_free ? "accepted" : "pending" }));
-      toast.success(courses.find((course) => course.id === courseId)?.is_free ? "You joined the course." : "Enrollment request sent to the teacher.");
+      if (error && !error.message.includes("duplicate")) toast.error("Could not join course.");
+      else {
+        setEnrollments((items) => ({ ...items, [courseId]: "accepted" }));
+        toast.success("You joined the course.");
+      }
+    } finally {
+      setJoiningCourseId(null);
     }
   };
   if (pathname !== "/courses") {
@@ -190,9 +207,9 @@ function CoursesPage() {
                 ) : (
                   <Button
                     onClick={() => void enroll(course.id)}
-                    disabled={Boolean(enrollments[course.id])}
+                    disabled={Boolean(enrollments[course.id]) || joiningCourseId === course.id}
                   >
-                    {enrollments[course.id] ? (
+                    {joiningCourseId === course.id ? "Opening payment…" : enrollments[course.id] ? (
                       <>
                         <CheckCircle2 data-icon="inline-start" />
                         {enrollments[course.id] === "pending" ? "Request pending" : "Enrolled"}
