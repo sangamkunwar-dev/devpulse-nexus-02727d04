@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, CheckCircle2, Github, LockKeyhole, PlayCircle } from "lucide-react";
+import { BookOpen, CheckCircle2, Github, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -26,7 +26,6 @@ function CoursesPage() {
   const [enrollments, setEnrollments] = useState<Record<string, Enrollment["status"]>>({});
   const [lessons, setLessons] = useState<Record<string, Lesson[]>>({});
   const [teachers, setTeachers] = useState<Record<string, Teacher>>({});
-  const [joiningCourseId, setJoiningCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -62,22 +61,6 @@ function CoursesPage() {
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get("session_id");
-    if (params.get("payment") !== "success" || !sessionId) return;
-    void (async () => {
-      const { data: session } = await supabase.auth.getSession();
-      const response = await fetch("/api/payments/stripe-verify", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.session?.access_token ?? ""}` }, body: JSON.stringify({ sessionId }) });
-      const result = await response.json() as { verified?: boolean; error?: string };
-      if (result.verified) {
-        toast.success("Payment verified. Your course is ready.");
-        window.history.replaceState({}, "", "/courses");
-        window.location.reload();
-      } else toast.error(result.error ?? "Payment verification failed.");
-    })();
-  }, []);
-
-  useEffect(() => {
     let userId = "";
     let channel: ReturnType<typeof supabase.channel> | null = null;
     void supabase.auth.getUser().then(({ data }) => {
@@ -92,44 +75,14 @@ function CoursesPage() {
   }, []);
 
   const enroll = async (courseId: string) => {
-    if (joiningCourseId) return;
-    setJoiningCourseId(courseId);
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) {
-        toast.error("Please sign in before joining a course.");
-        return;
-      }
-      const selectedCourse = courses.find((course) => course.id === courseId);
-      if (selectedCourse && !selectedCourse.is_free) {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session.session?.access_token) {
-          toast.error("Your session expired. Please sign in again.");
-          return;
-        }
-        const response = await fetch("/api/payments/stripe-checkout", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.session.access_token}` }, body: JSON.stringify({ courseId }) });
-        const result = await response.json().catch(() => ({})) as { url?: string; error?: string };
-        if (!response.ok || !result.url) {
-          toast.error(result.error ?? `Checkout could not start (${response.status}).`);
-          return;
-        }
-        window.location.href = result.url;
-        return;
-      }
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return toast.error("Please sign in before joining a course.");
     const { error } = await (supabase as any)
       .from("course_enrollments")
       .insert({ course_id: courseId, student_id: user.user.id, status: "accepted" });
-      if (error && !error.message.includes("duplicate")) toast.error("Could not join course.");
-      else {
-        setEnrollments((items) => ({ ...items, [courseId]: "accepted" }));
-        toast.success("You joined the course.");
-      }
-    } catch (error) {
-      console.error("[v0] Course enrollment checkout failed", error);
-      toast.error("Could not open payment. Please try again.");
-    } finally {
-      setJoiningCourseId(null);
-    }
+    if (error && !error.message.includes("duplicate")) return toast.error("Could not join course.");
+    setEnrollments((items) => ({ ...items, [courseId]: "accepted" }));
+    toast.success("You joined the course.");
   };
   if (pathname !== "/courses") {
     return <Outlet />;
@@ -192,13 +145,7 @@ function CoursesPage() {
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {course.description}
                   </p>
-                  <div className="mt-4 flex items-center gap-2 text-sm font-medium">
-                    {course.is_free ? (
-                      <span className="text-primary">Free</span>
-                    ) : (
-                      <><LockKeyhole className="size-4 text-primary" /> ${Number(course.price || 0).toFixed(2)}</>
-                    )}
-                  </div>
+                  <div className="mt-4 text-sm font-medium text-primary">Free enrollment</div>
                 </div>
                 {enrollments[course.id] === "accepted" ? (
                   <Link to="/courses/$courseId" params={{ courseId: course.id }} className="block">
@@ -210,9 +157,9 @@ function CoursesPage() {
                 ) : (
                   <Button
                     onClick={() => void enroll(course.id)}
-                    disabled={Boolean(enrollments[course.id]) || joiningCourseId === course.id}
+                    disabled={Boolean(enrollments[course.id])}
                   >
-                    {joiningCourseId === course.id ? "Opening payment…" : enrollments[course.id] ? (
+                    {enrollments[course.id] ? (
                       <>
                         <CheckCircle2 data-icon="inline-start" />
                         {enrollments[course.id] === "pending" ? "Request pending" : "Enrolled"}
