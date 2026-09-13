@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import {
@@ -10,6 +10,9 @@ import {
   ArrowRight,
   LayoutGrid,
   Flame,
+  Search,
+  UserPlus,
+  UserCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
@@ -26,6 +29,29 @@ function DashboardPage() {
   const navigate = useNavigate();
   const { userId } = useSession();
   const { data: profile, isLoading: profileLoading } = useProfile(userId);
+  const [peopleSearch, setPeopleSearch] = useState("");
+  const [people, setPeople] = useState<Array<{ user_id: string; username: string | null; display_name: string | null; avatar_url: string | null; is_following: boolean }>>([]);
+  const [peopleError, setPeopleError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const term = peopleSearch.trim();
+    if (!userId || term.length < 2) {
+      setPeople([]);
+      setPeopleError(null);
+      return;
+    }
+    const timer = window.setTimeout(async () => {
+      const { data, error } = await supabase.rpc("search_users", { search_term: term });
+      if (error) {
+        setPeople([]);
+        setPeopleError("User search is unavailable until the follow-search SQL is applied.");
+        return;
+      }
+      setPeopleError(null);
+      setPeople((data as typeof people) ?? []);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [peopleSearch, userId]);
 
   useEffect(() => {
     if (profile && !profile.onboarded) {
@@ -52,6 +78,18 @@ function DashboardPage() {
     },
   });
 
+  const toggleFollow = async (person: (typeof people)[number]) => {
+    if (!userId) return;
+    const { error } = person.is_following
+      ? await supabase.from("user_follows").delete().eq("follower_id", userId).eq("following_id", person.user_id)
+      : await supabase.from("user_follows").insert({ follower_id: userId, following_id: person.user_id });
+    if (error) {
+      setPeopleError("Could not update follow status. Please try again.");
+      return;
+    }
+    setPeople((current) => current.map((item) => item.user_id === person.user_id ? { ...item, is_following: !item.is_following } : item));
+  };
+
   const xp = profile?.xp ?? 0;
   const { level, progress, toNext } = levelFromXp(xp);
   const firstName = (profile?.display_name ?? profile?.username ?? "dev").split(" ")[0];
@@ -69,6 +107,62 @@ function DashboardPage() {
               : "Let's ship something great today."}
           </p>
         </motion.div>
+
+        <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bento-card mt-6 p-5"
+          aria-labelledby="find-people-heading"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 id="find-people-heading" className="font-display text-lg font-semibold">Find people</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Search by name, username, or email and follow developers.</p>
+            </div>
+            <Search className="hidden h-5 w-5 text-primary sm:block" />
+          </div>
+          <div className="relative mt-4">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={peopleSearch}
+              onChange={(event) => setPeopleSearch(event.target.value)}
+              placeholder="Search people…"
+              aria-label="Search people"
+              className="h-10 w-full rounded-lg border border-input bg-muted/50 pl-9 pr-3 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring/50"
+            />
+          </div>
+          {peopleError && <p className="mt-3 text-sm text-destructive">{peopleError}</p>}
+          {peopleSearch.trim().length >= 2 && !peopleError && (
+            <div className="mt-3 space-y-2">
+              {people.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-sm text-muted-foreground">No people found.</p>
+              ) : people.map((person) => (
+                <div key={person.user_id} className="flex items-center gap-3 rounded-lg border border-border/70 px-3 py-2">
+                  {person.avatar_url ? (
+                    <img src={person.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
+                  ) : (
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                      {(person.display_name ?? person.username ?? "U").slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                  <Link to="/u/$username" params={{ username: person.username ?? "" }} className="min-w-0 flex-1 hover:text-primary">
+                    <span className="block truncate text-sm font-medium">{person.display_name ?? person.username}</span>
+                    <span className="block truncate text-xs text-muted-foreground">@{person.username ?? "user"}</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => toggleFollow(person)}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:border-primary/50 hover:text-primary"
+                  >
+                    {person.is_following ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                    {person.is_following ? "Following" : "Follow"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.section>
 
         <div className="mt-6 grid gap-4 md:grid-cols-6">
           {/* XP card */}
