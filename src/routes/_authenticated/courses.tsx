@@ -79,10 +79,10 @@ function CoursesPage() {
     if (!user.user) return toast.error("Please sign in before joining a course.");
     const { error } = await (supabase as any)
       .from("course_enrollments")
-      .insert({ course_id: courseId, student_id: user.user.id, status: "accepted" });
-    if (error && !error.message.includes("duplicate")) return toast.error("Could not join course.");
-    setEnrollments((items) => ({ ...items, [courseId]: "accepted" }));
-    toast.success("You joined the course.");
+      .insert({ course_id: courseId, student_id: user.user.id, status: "pending" });
+    if (error && !error.message.includes("duplicate")) return toast.error("Could not send enrollment request.");
+    setEnrollments((items) => ({ ...items, [courseId]: "pending" }));
+    toast.success("Enrollment request sent. Wait for the teacher to accept you.");
   };
   if (pathname !== "/courses") {
     return <Outlet />;
@@ -162,7 +162,7 @@ function CoursesPage() {
                     {enrollments[course.id] ? (
                       <>
                         <CheckCircle2 data-icon="inline-start" />
-                        {enrollments[course.id] === "pending" ? "Request pending" : "Enrolled"}
+                        {enrollments[course.id] === "pending" ? "Request pending" : "Request declined"}
                       </>
                     ) : (
                       "Join course"
