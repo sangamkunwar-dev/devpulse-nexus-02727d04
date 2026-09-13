@@ -33,6 +33,7 @@ function TeacherDashboard() {
   const [isFree, setIsFree] = useState(true);
   const [price, setPrice] = useState("0");
   const [createStep, setCreateStep] = useState(1);
+  const [showCreateCourse, setShowCreateCourse] = useState(false);
   const [busy, setBusy] = useState(false);
   const [lessonTitle, setLessonTitle] = useState("");
 
@@ -140,6 +141,7 @@ function TeacherDashboard() {
     setMeetingUrl("");
     setMeetingAt("");
     setCreateStep(1);
+    setShowCreateCourse(false);
     await loadCourses();
     toast.success("Course created as a draft.");
   };
@@ -264,7 +266,16 @@ function TeacherDashboard() {
         </div>
         <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
           <section className="bento-card p-6">
-            <div className="mb-5 flex items-center gap-3">
+            {!showCreateCourse ? (
+              <div className="flex min-h-40 flex-col items-center justify-center text-center">
+                <div className="rounded-xl bg-primary/10 p-3 text-primary"><Plus className="size-6" /></div>
+                <h2 className="mt-4 font-display text-xl font-semibold">Create a course</h2>
+                <p className="mt-1 max-w-xs text-sm text-muted-foreground">Start a new learning experience for your students.</p>
+                <Button className="mt-5" type="button" onClick={() => { setCreateStep(1); setShowCreateCourse(true); }}>Create course</Button>
+              </div>
+            ) : <>
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
               <div className="rounded-lg bg-primary/10 p-3 text-primary">
                 <Plus />
               </div>
@@ -273,6 +284,8 @@ function TeacherDashboard() {
                 <p className="text-sm text-muted-foreground">
                   Start with a clear learning outcome.
                 </p>
+              </div>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowCreateCourse(false)}>Close</Button>
               </div>
             </div>
             <div className="mb-5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
@@ -299,6 +312,7 @@ function TeacherDashboard() {
               {createStep === 3 && <div className="rounded-xl border border-primary/30 bg-primary/5 p-4"><p className="font-medium">Ready to create</p><p className="mt-2 text-sm text-muted-foreground">{title} · {isFree ? "Free" : `$${Number(price || 0).toFixed(2)} paid`}</p><p className="mt-1 text-sm text-muted-foreground">You can add unlimited lessons and manage students next.</p></div>}
               <div className="flex flex-wrap justify-between gap-2"><Button type="button" variant="ghost" disabled={createStep === 1 || busy} onClick={() => setCreateStep((step) => step - 1)}>Back</Button><Button disabled={busy}>{busy ? "Creating…" : createStep === 3 ? "Create course" : `Continue to step ${createStep + 1}`}</Button></div>
             </form>
+            </>}
           </section>
           <section>
             <div className="mb-4 flex items-center justify-between">
