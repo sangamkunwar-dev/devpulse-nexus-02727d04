@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { Zap, Github, Globe, Code2, FolderGit2, Trophy, ExternalLink } from "lucide-react";
+import { Zap, Github, Globe, Code2, FolderGit2, Trophy, ExternalLink, UserPlus, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/hooks/useSession";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CodeBlock } from "@/components/CodeBlock";
@@ -23,6 +26,18 @@ export const Route = createFileRoute("/u/$username")({
 
 function PortfolioPage() {
   const { username } = Route.useParams();
+  const { userId } = useSession();
+
+  const { data: viewerFollow } = useQuery({
+    queryKey: ["profile-follow", userId, username],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data: target } = await supabase.from("profiles").select("user_id").eq("username", username).maybeSingle();
+      if (!target || target.user_id === userId) return false;
+      const { data: follow } = await supabase.from("user_follows").select("follower_id").eq("follower_id", userId!).eq("following_id", target.user_id).maybeSingle();
+      return !!follow;
+    },
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["portfolio", username],
@@ -89,6 +104,21 @@ function PortfolioPage() {
 
   const { profile, snippets, projects, followCounts } = data;
   const { level } = levelFromXp(profile.xp);
+  const isOwnProfile = userId === profile.user_id;
+
+  const toggleFollow = async () => {
+    if (!userId || isOwnProfile) return;
+    if (viewerFollow) {
+      const { error } = await supabase.from("user_follows").delete().eq("follower_id", userId).eq("following_id", profile.user_id);
+      if (error) return toast.error("Could not unfollow this user");
+      toast.success(`Unfollowed ${profile.username}`);
+    } else {
+      const { error } = await supabase.from("user_follows").insert({ follower_id: userId, following_id: profile.user_id });
+      if (error) return toast.error("Could not follow this user");
+      toast.success(`Following ${profile.username}`);
+    }
+    window.location.reload();
+  };
 
   return (
     <div className="hero-bg min-h-screen">
@@ -119,6 +149,17 @@ function PortfolioPage() {
                 <p className="font-mono text-sm text-muted-foreground">@{profile.username}</p>
                 {profile.tagline && <p className="mt-2 text-sm">{profile.tagline}</p>}
               </div>
+              {!isOwnProfile && userId && (
+                <Button
+                  size="sm"
+                  variant={viewerFollow ? "outline" : "default"}
+                  className="ml-auto shrink-0"
+                  onClick={toggleFollow}
+                >
+                  {viewerFollow ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                  {viewerFollow ? "Following" : "Follow"}
+                </Button>
+              )}
             </div>
             {profile.bio && (
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{profile.bio}</p>
