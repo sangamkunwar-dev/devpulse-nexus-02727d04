@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen, FileUp, Github, GraduationCap, Plus, Video } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -399,6 +399,7 @@ function TeacherDashboard() {
           </section>
         </div>
       </div>
+      <Outlet />
     </main>
   );
 }

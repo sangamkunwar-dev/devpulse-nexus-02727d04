@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen, CheckCircle2, Github, LockKeyhole, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -135,16 +135,12 @@ function CoursesPage() {
                   </div>
                 </div>
                 {enrollments[course.id] === "accepted" ? (
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setOpenCourse(course.id);
-                      document.getElementById(`enrolled-course-${course.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-                    }}
-                  >
-                    <PlayCircle data-icon="inline-start" />
-                    Continue course
-                  </Button>
+                  <Link to="/courses/$courseId" params={{ courseId: course.id }} className="block">
+                    <Button variant="secondary" className="w-full">
+                      <PlayCircle data-icon="inline-start" />
+                      Continue course
+                    </Button>
+                  </Link>
                 ) : (
                   <Button
                     onClick={() => void enroll(course.id)}
@@ -165,6 +161,7 @@ function CoursesPage() {
           </div>
         )}
       </div>
+      <Outlet />
     </main>
   );
 }
