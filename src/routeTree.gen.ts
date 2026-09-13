@@ -33,6 +33,8 @@ import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as AuthenticatedCoursesCourseIdRouteImport } from './routes/_authenticated/courses.$courseId'
 import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
 import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
+import { Route as ApiPaymentsStripeCheckoutRouteImport } from './routes/api/payments/stripe-checkout'
+import { Route as ApiPaymentsStripeWebhookRouteImport } from './routes/api/payments/stripe-webhook'
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
 import { Route as ApiTeacherFileRouteImport } from './routes/api/teacher/file'
 import { Route as ApiTeacherUploadRouteImport } from './routes/api/teacher/upload'
@@ -160,6 +162,18 @@ const AuthenticatedReviewsIdRoute = AuthenticatedReviewsIdRouteImport.update({
   path: '/reviews/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPaymentsStripeCheckoutRoute =
+  ApiPaymentsStripeCheckoutRouteImport.update({
+    id: '/api/payments/stripe-checkout',
+    path: '/api/payments/stripe-checkout',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPaymentsStripeWebhookRoute =
+  ApiPaymentsStripeWebhookRouteImport.update({
+    id: '/api/payments/stripe-webhook',
+    path: '/api/payments/stripe-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicNotifyRoute = ApiPublicNotifyRouteImport.update({
   id: '/api/public/notify',
   path: '/api/public/notify',
@@ -205,6 +219,8 @@ export interface FileRoutesByFullPath {
   '/u/$username': typeof UUsernameRoute
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
+  '/api/payments/stripe-checkout': typeof ApiPaymentsStripeCheckoutRoute
+  '/api/payments/stripe-webhook': typeof ApiPaymentsStripeWebhookRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -234,6 +250,8 @@ export interface FileRoutesByTo {
   '/u/$username': typeof UUsernameRoute
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
+  '/api/payments/stripe-checkout': typeof ApiPaymentsStripeCheckoutRoute
+  '/api/payments/stripe-webhook': typeof ApiPaymentsStripeWebhookRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -265,6 +283,8 @@ export interface FileRoutesById {
   '/u/$username': typeof UUsernameRoute
   '/_authenticated/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
+  '/api/payments/stripe-checkout': typeof ApiPaymentsStripeCheckoutRoute
+  '/api/payments/stripe-webhook': typeof ApiPaymentsStripeWebhookRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -296,6 +316,8 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/courses/$courseId'
     | '/reviews/$id'
+    | '/api/payments/stripe-checkout'
+    | '/api/payments/stripe-webhook'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -325,6 +347,8 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/courses/$courseId'
     | '/reviews/$id'
+    | '/api/payments/stripe-checkout'
+    | '/api/payments/stripe-webhook'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -355,6 +379,8 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/_authenticated/courses/$courseId'
     | '/_authenticated/reviews/$id'
+    | '/api/payments/stripe-checkout'
+    | '/api/payments/stripe-webhook'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -372,6 +398,8 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   UUsernameRoute: typeof UUsernameRoute
+  ApiPaymentsStripeCheckoutRoute: typeof ApiPaymentsStripeCheckoutRoute
+  ApiPaymentsStripeWebhookRoute: typeof ApiPaymentsStripeWebhookRoute
   ApiPublicNotifyRoute: typeof ApiPublicNotifyRoute
   ApiTeacherFileRoute: typeof ApiTeacherFileRoute
   ApiTeacherUploadRoute: typeof ApiTeacherUploadRoute
@@ -547,6 +575,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReviewsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/payments/stripe-checkout': {
+      id: '/api/payments/stripe-checkout'
+      path: '/api/payments/stripe-checkout'
+      fullPath: '/api/payments/stripe-checkout'
+      preLoaderRoute: typeof ApiPaymentsStripeCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payments/stripe-webhook': {
+      id: '/api/payments/stripe-webhook'
+      path: '/api/payments/stripe-webhook'
+      fullPath: '/api/payments/stripe-webhook'
+      preLoaderRoute: typeof ApiPaymentsStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/notify': {
       id: '/api/public/notify'
       path: '/api/public/notify'
@@ -648,6 +690,8 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   UUsernameRoute: UUsernameRoute,
+  ApiPaymentsStripeCheckoutRoute: ApiPaymentsStripeCheckoutRoute,
+  ApiPaymentsStripeWebhookRoute: ApiPaymentsStripeWebhookRoute,
   ApiPublicNotifyRoute: ApiPublicNotifyRoute,
   ApiTeacherFileRoute: ApiTeacherFileRoute,
   ApiTeacherUploadRoute: ApiTeacherUploadRoute,

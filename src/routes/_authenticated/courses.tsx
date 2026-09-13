@@ -59,12 +59,36 @@ function CoursesPage() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    let userId = "";
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    void supabase.auth.getUser().then(({ data }) => {
+      userId = data.user?.id ?? "";
+      if (!userId) return;
+      channel = supabase.channel("student-course-enrollments").on("postgres_changes", { event: "*", schema: "public", table: "course_enrollments", filter: `student_id=eq.${userId}` }, (payload) => {
+        const row = payload.new as Enrollment;
+        if (row.course_id) setEnrollments((items) => ({ ...items, [row.course_id]: row.status }));
+      }).subscribe();
+    });
+    return () => { if (channel) void supabase.removeChannel(channel); };
+  }, []);
+
   const enroll = async (courseId: string) => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return;
+    const selectedCourse = courses.find((course) => course.id === courseId);
+    if (selectedCourse && !selectedCourse.is_free) {
+      const { data: session } = await supabase.auth.getSession();
+      const response = await fetch("/api/payments/stripe-checkout", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.session?.access_token ?? ""}` }, body: JSON.stringify({ courseId }) });
+      const result = await response.json() as { url?: string; error?: string };
+      if (!response.ok || !result.url) return toast.error(result.error ?? "Could not start checkout.");
+      window.location.assign(result.url);
+      return;
+    }
     const { error } = await (supabase as any)
       .from("course_enrollments")
-      .insert({ course_id: courseId, student_id: user.user.id, status: courses.find((course) => course.id === courseId)?.is_free ? "accepted" : "pending" });
+      .insert({ course_id: courseId, student_id: user.user.id, status: "accepted" });
     if (error && !error.message.includes("duplicate")) toast.error("Could not join course.");
     else {
       setEnrollments((items) => ({ ...items, [courseId]: courses.find((course) => course.id === courseId)?.is_free ? "accepted" : "pending" }));
