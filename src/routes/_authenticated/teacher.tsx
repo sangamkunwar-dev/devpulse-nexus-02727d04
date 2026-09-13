@@ -35,6 +35,12 @@ function TeacherDashboard() {
   const [createStep, setCreateStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [lessonTitle, setLessonTitle] = useState("");
+
+  const toMeetingTimestamp = (value: string) => {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  };
   const [lessonContent, setLessonContent] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [courseLessons, setCourseLessons] = useState<Lesson[]>([]);
@@ -113,7 +119,7 @@ function TeacherDashboard() {
       repo_url: repoUrl.trim() || null,
       meeting_title: meetingTitle.trim() || null,
       meeting_url: meetingUrl.trim() || null,
-      meeting_at: meetingAt ? new Date(meetingAt).toISOString() : null,
+      meeting_at: toMeetingTimestamp(meetingAt),
       is_free: isFree,
       price: isFree ? 0 : Math.max(0, Number(price) || 0),
     });
