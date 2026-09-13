@@ -19,13 +19,21 @@ export const Route = createFileRoute("/api/teacher/file")({
         );
         const { data: claims } = await supabase.auth.getClaims(token);
         if (!claims?.claims?.sub) return Response.json({ error: "Unauthorized" }, { status: 401 });
-        const { data: lesson } = await supabase
-          .from("course_lessons")
-          .select("id, courses!inner(teacher_id, published)")
-          .eq("asset_path", pathname)
-          .or(`published.eq.true,teacher_id.eq.${claims.claims.sub}`, { foreignTable: "courses" })
+        const { data: file } = await supabase
+          .from("course_files")
+          .select("id, course_id, courses!inner(teacher_id, published)")
+          .eq("storage_path", pathname)
           .maybeSingle();
-        if (!lesson) return Response.json({ error: "Forbidden" }, { status: 403 });
+        if (!file) return Response.json({ error: "Forbidden" }, { status: 403 });
+        const { data: enrollment } = await supabase
+          .from("course_enrollments")
+          .select("id")
+          .eq("course_id", file.course_id)
+          .eq("student_id", claims.claims.sub)
+          .eq("status", "accepted")
+          .maybeSingle();
+        const course = file.courses as { teacher_id: string; published: boolean };
+        if (course.teacher_id !== claims.claims.sub && !course.published && !enrollment) return Response.json({ error: "Forbidden" }, { status: 403 });
         const result = await get(pathname, { access: "private" });
         if (!result) return new Response("Not found", { status: 404 });
         return new Response(result.stream, {
