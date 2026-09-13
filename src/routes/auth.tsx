@@ -71,6 +71,13 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
+        const limitResponse = await fetch("/api/auth/signup-limit", { method: "POST" });
+        if (limitResponse.status === 429) {
+          const limitData = (await limitResponse.json().catch(() => null)) as { retryAfter?: number } | null;
+          const minutes = Math.max(1, Math.ceil((limitData?.retryAfter ?? 3600) / 60));
+          throw new Error(`Too many signup attempts. Please try again in about ${minutes} minutes.`);
+        }
+        if (!limitResponse.ok) throw new Error("Signup protection is temporarily unavailable. Please try again.");
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,

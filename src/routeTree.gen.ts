@@ -34,6 +34,7 @@ import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as AuthenticatedCoursesCourseIdRouteImport } from './routes/_authenticated/courses.$courseId'
 import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
 import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
+import { Route as ApiAuthSignupLimitRouteImport } from './routes/api/auth/signup-limit'
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
 import { Route as ApiTeacherFileRouteImport } from './routes/api/teacher/file'
 import { Route as ApiTeacherUploadRouteImport } from './routes/api/teacher/upload'
@@ -166,6 +167,11 @@ const AuthenticatedReviewsIdRoute = AuthenticatedReviewsIdRouteImport.update({
   path: '/reviews/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiAuthSignupLimitRoute = ApiAuthSignupLimitRouteImport.update({
+  id: '/api/auth/signup-limit',
+  path: '/api/auth/signup-limit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicNotifyRoute = ApiPublicNotifyRouteImport.update({
   id: '/api/public/notify',
   path: '/api/public/notify',
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/u/$username': typeof UUsernameRoute
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
+  '/api/auth/signup-limit': typeof ApiAuthSignupLimitRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/u/$username': typeof UUsernameRoute
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
+  '/api/auth/signup-limit': typeof ApiAuthSignupLimitRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -274,6 +282,7 @@ export interface FileRoutesById {
   '/u/$username': typeof UUsernameRoute
   '/_authenticated/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
+  '/api/auth/signup-limit': typeof ApiAuthSignupLimitRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -306,6 +315,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/courses/$courseId'
     | '/reviews/$id'
+    | '/api/auth/signup-limit'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -336,6 +346,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/courses/$courseId'
     | '/reviews/$id'
+    | '/api/auth/signup-limit'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/_authenticated/courses/$courseId'
     | '/_authenticated/reviews/$id'
+    | '/api/auth/signup-limit'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -384,6 +396,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   UUsernameRoute: typeof UUsernameRoute
+  ApiAuthSignupLimitRoute: typeof ApiAuthSignupLimitRoute
   ApiPublicNotifyRoute: typeof ApiPublicNotifyRoute
   ApiTeacherFileRoute: typeof ApiTeacherFileRoute
   ApiTeacherUploadRoute: typeof ApiTeacherUploadRoute
@@ -566,6 +579,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReviewsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/auth/signup-limit': {
+      id: '/api/auth/signup-limit'
+      path: '/api/auth/signup-limit'
+      fullPath: '/api/auth/signup-limit'
+      preLoaderRoute: typeof ApiAuthSignupLimitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/notify': {
       id: '/api/public/notify'
       path: '/api/public/notify'
@@ -669,6 +689,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   UUsernameRoute: UUsernameRoute,
+  ApiAuthSignupLimitRoute: ApiAuthSignupLimitRoute,
   ApiPublicNotifyRoute: ApiPublicNotifyRoute,
   ApiTeacherFileRoute: ApiTeacherFileRoute,
   ApiTeacherUploadRoute: ApiTeacherUploadRoute,
