@@ -1,0 +1,10 @@
+alter table public.direct_messages add column if not exists attachment_path text;
+alter table public.direct_messages add column if not exists attachment_name text;
+alter table public.direct_messages add column if not exists attachment_type text;
+alter table public.direct_messages add column if not exists attachment_size bigint;
+alter table public.direct_messages drop constraint if exists direct_messages_body_required;
+alter table public.direct_messages drop constraint if exists direct_messages_body_check;
+alter table public.direct_messages add constraint direct_messages_content_required check (char_length(trim(body)) between 0 and 4000 and (char_length(trim(body)) > 0 or attachment_path is not null));
+grant delete on public.direct_messages to authenticated;
+create policy "Users can delete their sent messages" on public.direct_messages for delete to authenticated using ((select auth.uid()) = sender_id); 
+create index if not exists direct_messages_attachment_idx on public.direct_messages (attachment_path) where attachment_path is not null;
