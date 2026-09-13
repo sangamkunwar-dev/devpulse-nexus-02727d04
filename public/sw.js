@@ -1,4 +1,4 @@
-const CACHE_NAME = "devpulse-shell-v1";
+const CACHE_NAME = "devpulse-shell-v2";
 const APP_SHELL = ["/", "/auth", "/dashboard", "/courses", "/teacher", "/manifest.webmanifest", "/devpulse-logo.png", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
 const OFFLINE_HTML = "/";
 
@@ -13,11 +13,17 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
-  event.respondWith(caches.match(request).then((cached) => cached || fetch(request).then((response) => {
-    if (response.ok && (request.destination === "document" || request.destination === "image" || request.destination === "style" || request.destination === "script")) {
-      const copy = response.clone();
-      void caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+  event.respondWith((async () => {
+    const cached = await caches.match(request);
+    try {
+      const response = await fetch(request);
+      if (response.ok && (request.destination === "document" || request.destination === "image" || request.destination === "style" || request.destination === "script" || request.destination === "empty")) {
+        const copy = response.clone();
+        void caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+      }
+      return response;
+    } catch {
+      return cached || (request.mode === "navigate" ? caches.match(OFFLINE_HTML) : undefined);
     }
-    return response;
-  }).catch(() => request.mode === "navigate" ? caches.match(OFFLINE_HTML) : caches.match(request))));
+  })());
 });
