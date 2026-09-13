@@ -27,6 +27,9 @@ function TeacherDashboard() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
+  const [meetingTitle, setMeetingTitle] = useState("");
+  const [meetingUrl, setMeetingUrl] = useState("");
+  const [meetingAt, setMeetingAt] = useState("");
   const [isFree, setIsFree] = useState(true);
   const [price, setPrice] = useState("0");
   const [createStep, setCreateStep] = useState(1);
@@ -108,6 +111,9 @@ function TeacherDashboard() {
       title: title.trim(),
       description: description.trim(),
       repo_url: repoUrl.trim() || null,
+      meeting_title: meetingTitle.trim() || null,
+      meeting_url: meetingUrl.trim() || null,
+      meeting_at: meetingAt ? new Date(meetingAt).toISOString() : null,
       is_free: isFree,
       price: isFree ? 0 : Math.max(0, Number(price) || 0),
     });
@@ -124,6 +130,10 @@ function TeacherDashboard() {
     setTitle("");
     setDescription("");
     setRepoUrl("");
+    setMeetingTitle("");
+    setMeetingUrl("");
+    setMeetingAt("");
+    setCreateStep(1);
     await loadCourses();
     toast.success("Course created as a draft.");
   };
@@ -254,6 +264,7 @@ function TeacherDashboard() {
                 <div><Label htmlFor="course-title">Course title</Label><Input id="course-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="JavaScript foundations" /></div>
                 <div><Label htmlFor="course-description">Learning outcome</Label><Textarea id="course-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What will students build?" /></div>
                 <div><Label htmlFor="course-repository">GitHub repository <span className="text-muted-foreground">(optional)</span></Label><div className="mt-1 flex items-center gap-2"><Github className="size-4 text-muted-foreground" /><Input id="course-repository" value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} placeholder="https://github.com/you/project" type="url" /></div></div>
+                <div className="rounded-xl border border-border bg-muted/20 p-4"><p className="font-medium">Live learning meeting</p><p className="mt-1 text-sm text-muted-foreground">Add a Google Meet, Zoom, or any video call link for students.</p><div className="mt-3 grid gap-3"><Input aria-label="Meeting title" value={meetingTitle} onChange={(e) => setMeetingTitle(e.target.value)} placeholder="Weekly office hours" /><Input aria-label="Meeting link" value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://meet.google.com/..." type="url" /><Input aria-label="Meeting date and time" value={meetingAt} onChange={(e) => setMeetingAt(e.target.value)} type="datetime-local" /></div></div>
               </>}
               {createStep === 2 && <>
                 <div className="rounded-xl border border-border bg-muted/20 p-4"><p className="font-medium">Choose access</p><p className="mt-1 text-sm text-muted-foreground">Free courses open instantly. Paid courses stay locked until you accept each student.</p></div>

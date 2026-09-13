@@ -92,3 +92,32 @@ $$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
+
+-- Course meetings and GitHub-style course files. Apply this migration in Supabase before using these fields.
+alter table public.courses add column if not exists meeting_title text;
+alter table public.courses add column if not exists meeting_url text;
+alter table public.courses add column if not exists meeting_at timestamptz;
+
+create table if not exists public.course_files (
+  id uuid primary key default gen_random_uuid(),
+  course_id uuid not null references public.courses(id) on delete cascade,
+  parent_id uuid references public.course_files(id) on delete cascade,
+  name text not null,
+  kind text not null default 'file' check (kind in ('file', 'folder')),
+  content text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.course_files enable row level security;
+grant select, insert, update, delete on public.course_files to authenticated;
+drop policy if exists "course files readable" on public.course_files;
+create policy "course files readable" on public.course_files for select to authenticated using (
+  exists (select 1 from public.courses c where c.id = course_id and (c.teacher_id = auth.uid() or exists (select 1 from public.course_enrollments e where e.course_id = c.id and e.student_id = auth.uid() and e.status = 'accepted')))
+);
+drop policy if exists "teachers manage course files" on public.course_files;
+create policy "teachers manage course files" on public.course_files for all to authenticated using (
+  exists (select 1 from public.courses c where c.id = course_id and c.teacher_id = auth.uid())
+) with check (
+  exists (select 1 from public.courses c where c.id = course_id and c.teacher_id = auth.uid())
+);
