@@ -16,6 +16,19 @@ function CourseLearningPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [enrollmentStatus, setEnrollmentStatus] = useState<"pending" | "accepted" | "rejected" | null>(null);
   const [loading, setLoading] = useState(true);
+  const [removing, setRemoving] = useState(false);
+
+  const removeEnrollment = async () => {
+    if (!window.confirm("Remove yourself from this course? You can request access again later.")) return;
+    setRemoving(true);
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) { setRemoving(false); return toast.error("Your session has expired."); }
+    const { error } = await (supabase as any).from("course_enrollments").delete().eq("course_id", courseId).eq("student_id", user.user.id);
+    setRemoving(false);
+    if (error) return toast.error("Could not remove you from this course. Apply the course permissions SQL first.");
+    toast.success("You left the course.");
+    window.location.assign("/courses");
+  };
 
   useEffect(() => {
     void (async () => {
@@ -54,7 +67,7 @@ function CourseLearningPage() {
       ) : <>
       {course.meeting_url && <section className="mb-6 rounded-2xl border border-primary/30 bg-primary/5 p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Live learning</p><h2 className="mt-2 font-display text-xl font-semibold">{course.meeting_title || "Course meeting"}</h2>{course.meeting_at && <p className="mt-1 text-sm text-muted-foreground">{new Date(course.meeting_at).toLocaleString()}</p>}<a href={course.meeting_url} target="_blank" rel="noreferrer"><Button className="mt-4">Join meeting</Button></a></section>}
       <section className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
-        <aside className="bento-card h-fit p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Course map</p><h2 className="mt-2 font-display text-2xl font-semibold">{lessons.length} lessons</h2><p className="mt-2 text-sm text-muted-foreground">Work through each lesson at your own pace.</p><div className="mt-5 flex items-center gap-2 text-sm text-primary"><CheckCircle2 className="size-4" /> Enrolled and unlocked</div></aside>
+        <aside className="bento-card h-fit p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Course map</p><h2 className="mt-2 font-display text-2xl font-semibold">{lessons.length} lessons</h2><p className="mt-2 text-sm text-muted-foreground">Work through each lesson at your own pace.</p><div className="mt-5 flex items-center gap-2 text-sm text-primary"><CheckCircle2 className="size-4" /> Enrolled and unlocked</div><Button type="button" variant="ghost" className="mt-6 w-full text-destructive hover:text-destructive" onClick={() => void removeEnrollment()} disabled={removing}>{removing ? "Leaving…" : "Leave course"}</Button></aside>
         <div className="space-y-3">{lessons.length ? lessons.map((lesson, index) => <article key={lesson.id} className="bento-card p-5 sm:p-6"><div className="flex gap-4"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">{index + 1}</span><div className="min-w-0"><h2 className="font-display text-xl font-semibold">{lesson.title}</h2><p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{lesson.content || "This lesson is ready to explore."}</p>{lesson.asset_path && <a href={lesson.asset_path} target="_blank" rel="noreferrer" className="mt-4 inline-block text-sm font-medium text-primary hover:underline">Open lesson resource</a>}</div></div></article>) : <div className="bento-card p-10 text-center"><LockKeyhole className="mx-auto mb-3 text-primary" /><p className="font-medium">Lessons are coming soon.</p><p className="mt-1 text-sm text-muted-foreground">Your teacher has not published lesson content yet.</p></div>}</div>
       </section>
       </>}

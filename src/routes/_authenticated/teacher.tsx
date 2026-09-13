@@ -210,6 +210,16 @@ function TeacherDashboard() {
     toast.success(status === "accepted" ? "Student accepted." : "Enrollment declined.");
   };
 
+  const deleteCourse = async (course: Course) => {
+    if (!window.confirm(`Delete “${course.title}”? This permanently removes its lessons, files, and enrollments.`)) return;
+    const { error } = await (supabase as any).from("courses").delete().eq("id", course.id);
+    if (error) return toast.error("Could not delete course. Apply the course permissions SQL first.");
+    setCourses((items) => items.filter((item) => item.id !== course.id));
+    setEnrollments((items) => items.filter((item) => item.course_id !== course.id));
+    if (selectedCourse === course.id) setSelectedCourse(null);
+    toast.success("Course deleted.");
+  };
+
   const togglePublished = async (course: Course) => {
     const { error } = await (supabase as any)
       .from("courses")
@@ -331,6 +341,9 @@ function TeacherDashboard() {
                         onClick={() => void togglePublished(course)}
                       >
                         {course.published ? "Published" : "Publish"}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => void deleteCourse(course)}>
+                        Delete
                       </Button>
                     </div>
                   </article>
