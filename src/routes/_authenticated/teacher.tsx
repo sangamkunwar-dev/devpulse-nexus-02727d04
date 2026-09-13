@@ -19,6 +19,7 @@ type Course = {
   price: number;
 };
 type Enrollment = { id: string; course_id: string; student_id: string; status: "pending" | "accepted" | "rejected"; student?: { display_name: string | null; username: string | null } | null };
+type Lesson = { id: string; title: string; content: string | null; position: number; asset_name?: string | null };
 
 function TeacherDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -32,6 +33,7 @@ function TeacherDashboard() {
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonContent, setLessonContent] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [courseLessons, setCourseLessons] = useState<Lesson[]>([]);
   const [lessonBusy, setLessonBusy] = useState(false);
   const [uploadBusy, setUploadBusy] = useState(false);
 
@@ -58,6 +60,22 @@ function TeacherDashboard() {
   useEffect(() => {
     void loadCourses();
   }, []);
+
+  useEffect(() => {
+    if (!selectedCourse) {
+      setCourseLessons([]);
+      return;
+    }
+    void (async () => {
+      const { data, error } = await (supabase as any)
+        .from("course_lessons")
+        .select("id,title,content,position,asset_name")
+        .eq("course_id", selectedCourse)
+        .order("position", { ascending: true });
+      if (error) toast.error("Could not load course lessons.");
+      else setCourseLessons((data ?? []) as Lesson[]);
+    })();
+  }, [selectedCourse]);
 
   const createCourse = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -103,7 +121,7 @@ function TeacherDashboard() {
       course_id: selectedCourse,
       title: lessonTitle.trim(),
       content: lessonContent.trim(),
-      position: 1,
+      position: courseLessons.length + 1,
     });
     setLessonBusy(false);
     if (error) return toast.error("Could not add lesson. Apply the course SQL first.");
@@ -277,7 +295,14 @@ function TeacherDashboard() {
                         size="sm"
                         onClick={() => setSelectedCourse(course.id)}
                       >
-                        Add content
+                        Manage course
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedCourse(course.id)}
+                      >
+                        Students ({enrollments.filter((enrollment) => enrollment.course_id === course.id).length})
                       </Button>
                       <Button
                         variant={course.published ? "secondary" : "outline"}
@@ -316,11 +341,26 @@ function TeacherDashboard() {
                     </p>
                   </div>
                 </div>
+                <div className="mb-5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <span className="rounded-full bg-primary px-2.5 py-1 text-primary-foreground">Step 1</span>
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="rounded-full border border-border px-2.5 py-1">Step 2: publish</span>
+                </div>
+                {courseLessons.length > 0 && (
+                  <ol className="mb-5 space-y-2">
+                    {courseLessons.map((lesson, index) => (
+                      <li key={lesson.id} className="flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-3">
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">{index + 1}</span>
+                        <div className="min-w-0"><p className="font-medium">{lesson.title}</p><p className="truncate text-xs text-muted-foreground">{lesson.asset_name ?? lesson.content ?? "Lesson content"}</p></div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
                 <form onSubmit={addLesson} className="flex flex-col gap-3">
                   <Input
                     value={lessonTitle}
                     onChange={(event) => setLessonTitle(event.target.value)}
-                    placeholder="Lesson title"
+                    placeholder={`Lesson ${courseLessons.length + 1} title`}
                   />
                   <Textarea
                     value={lessonContent}
@@ -328,7 +368,7 @@ function TeacherDashboard() {
                     placeholder="Lesson notes or instructions"
                   />
                   <div className="flex flex-wrap gap-2">
-                    <Button disabled={lessonBusy}>{lessonBusy ? "Saving…" : "Add lesson"}</Button>
+                    <Button disabled={lessonBusy}>{lessonBusy ? "Saving…" : `Add lesson ${courseLessons.length + 1}`}</Button>
                     <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted">
                       <FileUp /> {uploadBusy ? "Uploading…" : "Upload file or video"}
                       <input

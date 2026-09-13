@@ -66,8 +66,8 @@ function CoursesPage() {
       .insert({ course_id: courseId, student_id: user.user.id, status: courses.find((course) => course.id === courseId)?.is_free ? "accepted" : "pending" });
     if (error && !error.message.includes("duplicate")) toast.error("Could not join course.");
     else {
-      setEnrolled((items) => [...items, courseId]);
-      toast.success("You joined the course.");
+      setEnrollments((items) => ({ ...items, [courseId]: courses.find((course) => course.id === courseId)?.is_free ? "accepted" : "pending" }));
+      toast.success(courses.find((course) => course.id === courseId)?.is_free ? "You joined the course." : "Enrollment request sent to the teacher.");
     }
   };
   return (
