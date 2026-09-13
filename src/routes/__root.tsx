@@ -165,6 +165,15 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const [offline, setOffline] = useState(false);
+
+  useEffect(() => {
+    const update = () => setOffline(!navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
+  }, []);
 
   useEffect(() => {
     const {
@@ -183,6 +192,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+      {offline && <div className="fixed inset-x-0 top-0 z-[100] border-b border-amber-400/30 bg-amber-500/10 px-4 py-2 text-center text-xs font-medium text-amber-200">You are offline. Cached pages remain available; changes will sync when you reconnect.</div>}
       <Outlet />
       <CommandPalette />
       <Toaster theme="dark" position="bottom-right" richColors closeButton />
