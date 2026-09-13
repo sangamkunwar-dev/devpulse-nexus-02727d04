@@ -5,6 +5,7 @@ import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 const securityMiddleware = createMiddleware().server(async ({ next }) => {
   const response = await next();
+  if (!(response instanceof Response)) return response;
   const headers = new Headers(response.headers);
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
