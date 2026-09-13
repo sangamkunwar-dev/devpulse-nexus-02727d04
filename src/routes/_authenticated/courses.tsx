@@ -71,6 +71,10 @@ function CoursesPage() {
       toast.success(courses.find((course) => course.id === courseId)?.is_free ? "You joined the course." : "Enrollment request sent to the teacher.");
     }
   };
+  if (pathname !== "/courses") {
+    return <Outlet />;
+  }
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-background px-4 py-6 text-foreground sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl">
