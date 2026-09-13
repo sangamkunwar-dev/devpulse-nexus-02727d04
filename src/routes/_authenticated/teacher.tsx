@@ -250,13 +250,14 @@ function TeacherDashboard() {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-background px-4 py-6 text-foreground sm:px-6 sm:py-10">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col items-stretch justify-between gap-5 sm:mb-10 sm:flex-row sm:items-start sm:gap-4">
+    <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.12),transparent_32%),hsl(var(--background))] px-4 py-6 text-foreground sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 rounded-3xl border border-border/70 bg-card/80 p-5 shadow-sm backdrop-blur sm:mb-10 sm:p-8">
+        <div className="flex flex-col items-stretch justify-between gap-6 sm:flex-row sm:items-start sm:gap-4">
           <div>
-            <p className="mb-2 text-sm text-primary">TEACHER STUDIO</p>
-            <h1 className="max-w-xl font-display text-3xl font-semibold sm:text-4xl">Teach what you know.</h1>
-            <p className="mt-2 max-w-xl text-muted-foreground">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"><GraduationCap className="size-3.5" /> Teacher Studio</div>
+            <h1 className="max-w-xl font-display text-3xl font-semibold tracking-tight sm:text-5xl">Teach what you know.</h1>
+            <p className="mt-3 max-w-xl text-muted-foreground">
               Create free courses, share practical lessons, and help the next developer level up.
             </p>
           </div>
@@ -264,7 +265,8 @@ function TeacherDashboard() {
             <Button variant="outline">Back to app</Button>
           </Link>
         </div>
-        <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+        </div>
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.5fr]">
           <section className="bento-card p-6">
             {!showCreateCourse ? (
               <div className="flex min-h-40 flex-col items-center justify-center text-center">
@@ -339,7 +341,7 @@ function TeacherDashboard() {
                 {courses.map((course) => (
                   <article
                     key={course.id}
-                    className="bento-card flex flex-col items-stretch justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5"
+                    className="group rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg sm:p-6"
                   >
                     <div>
                       <h3 className="font-semibold">{course.title}</h3>
