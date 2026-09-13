@@ -29,6 +29,7 @@ function TeacherDashboard() {
   const [repoUrl, setRepoUrl] = useState("");
   const [isFree, setIsFree] = useState(true);
   const [price, setPrice] = useState("0");
+  const [createStep, setCreateStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonContent, setLessonContent] = useState("");
@@ -77,8 +78,16 @@ function TeacherDashboard() {
     })();
   }, [selectedCourse]);
 
+  const advanceCourseStep = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (createStep === 1 && !title.trim()) return toast.error("Add a course title.");
+    if (createStep === 2 && !isFree && (!Number(price) || Number(price) < 0)) return toast.error("Add a valid course price.");
+    setCreateStep((step) => Math.min(3, step + 1));
+  };
+
   const createCourse = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (createStep < 3) return advanceCourseStep(event);
     if (!title.trim()) return toast.error("Add a course title.");
     setBusy(true);
     const { data: userData } = await supabase.auth.getUser();
@@ -125,6 +134,12 @@ function TeacherDashboard() {
     });
     setLessonBusy(false);
     if (error) return toast.error("Could not add lesson. Apply the course SQL first.");
+    setCourseLessons((lessons) => [...lessons, {
+      id: crypto.randomUUID(),
+      title: lessonTitle.trim(),
+      content: lessonContent.trim(),
+      position: lessons.length + 1,
+    }]);
     setLessonTitle("");
     setLessonContent("");
     toast.success(`Lesson added for ${userData.user?.email ?? "your students"}.`);
@@ -213,47 +228,28 @@ function TeacherDashboard() {
                 </p>
               </div>
             </div>
+            <div className="mb-5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              {["Basics", "Pricing", "Review"].map((label, index) => (
+                <div key={label} className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className={`flex size-7 shrink-0 items-center justify-center rounded-full ${createStep >= index + 1 ? "bg-primary text-primary-foreground" : "border border-border"}`}>{index + 1}</span>
+                  <span className="hidden truncate sm:block">{label}</span>
+                  {index < 2 && <span className="h-px flex-1 bg-border" />}
+                </div>
+              ))}
+            </div>
             <form onSubmit={createCourse} className="flex flex-col gap-4">
-              <div>
-                <Label htmlFor="course-title">Title</Label>
-                <Input
-                  id="course-title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="JavaScript foundations"
-                />
-              </div>
-              <div>
-                <Label htmlFor="course-description">Description</Label>
-                <Textarea
-                  id="course-description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="What will students build?"
-                />
-              </div>
-              <div>
-                <Label htmlFor="course-repository">GitHub repository</Label>
-                <div className="mt-1 flex items-center gap-2">
-                  <Github className="size-4 text-muted-foreground" />
-                  <Input id="course-repository" value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} placeholder="https://github.com/you/project" type="url" />
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">Share the starter code or project repository with students.</p>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                <div>
-                  <Label htmlFor="course-paid">Paid course</Label>
-                  <p className="text-xs text-muted-foreground">Turn this off to offer it free.</p>
-                </div>
-                <input id="course-paid" type="checkbox" checked={!isFree} onChange={(e) => setIsFree(!e.target.checked)} className="h-4 w-4 accent-primary" />
-              </div>
-              {!isFree && (
-                <div>
-                  <Label htmlFor="course-price">Price</Label>
-                  <Input id="course-price" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="49.00" />
-                </div>
-              )}
-              <Button disabled={busy}>{busy ? "Creating…" : "Create draft"}</Button>
+              {createStep === 1 && <>
+                <div><Label htmlFor="course-title">Course title</Label><Input id="course-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="JavaScript foundations" /></div>
+                <div><Label htmlFor="course-description">Learning outcome</Label><Textarea id="course-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What will students build?" /></div>
+                <div><Label htmlFor="course-repository">GitHub repository <span className="text-muted-foreground">(optional)</span></Label><div className="mt-1 flex items-center gap-2"><Github className="size-4 text-muted-foreground" /><Input id="course-repository" value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} placeholder="https://github.com/you/project" type="url" /></div></div>
+              </>}
+              {createStep === 2 && <>
+                <div className="rounded-xl border border-border bg-muted/20 p-4"><p className="font-medium">Choose access</p><p className="mt-1 text-sm text-muted-foreground">Free courses open instantly. Paid courses stay locked until you accept each student.</p></div>
+                <div className="flex items-center justify-between rounded-lg border border-border p-3"><div><Label htmlFor="course-paid">Paid course</Label><p className="text-xs text-muted-foreground">Require teacher approval.</p></div><input id="course-paid" type="checkbox" checked={!isFree} onChange={(e) => setIsFree(!e.target.checked)} className="h-4 w-4 accent-primary" /></div>
+                {!isFree && <div><Label htmlFor="course-price">Price</Label><Input id="course-price" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="49.00" /></div>}
+              </>}
+              {createStep === 3 && <div className="rounded-xl border border-primary/30 bg-primary/5 p-4"><p className="font-medium">Ready to create</p><p className="mt-2 text-sm text-muted-foreground">{title} · {isFree ? "Free" : `$${Number(price || 0).toFixed(2)} paid`}</p><p className="mt-1 text-sm text-muted-foreground">You can add unlimited lessons and manage students next.</p></div>}
+              <div className="flex flex-wrap justify-between gap-2"><Button type="button" variant="ghost" disabled={createStep === 1 || busy} onClick={() => setCreateStep((step) => step - 1)}>Back</Button><Button disabled={busy}>{busy ? "Creating…" : createStep === 3 ? "Create course" : `Continue to step ${createStep + 1}`}</Button></div>
             </form>
           </section>
           <section>
