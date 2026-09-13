@@ -7,26 +7,27 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/courses/$courseId")({ component: CourseLearningPage });
 
-type Course = { id: string; title: string; description: string; level: string; is_free: boolean; price: number; repo_url?: string | null };
+type Course = { id: string; title: string; description: string; level: string; is_free: boolean; price: number; repo_url?: string | null; meeting_title?: string | null; meeting_url?: string | null; meeting_at?: string | null };
 type Lesson = { id: string; title: string; content: string | null; position: number; asset_path?: string | null };
 
 function CourseLearningPage() {
   const { courseId } = Route.useParams();
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [enrollmentStatus, setEnrollmentStatus] = useState<"pending" | "accepted" | "rejected" | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     void (async () => {
       const [{ data: courseData }, { data: lessonData }] = await Promise.all([
-        (supabase as any).from("courses").select("id,title,description,level,is_free,price,repo_url").eq("id", courseId).maybeSingle(),
+        (supabase as any).from("courses").select("id,title,description,level,is_free,price,repo_url,meeting_title,meeting_url,meeting_at").eq("id", courseId).maybeSingle(),
         (supabase as any).from("course_lessons").select("id,title,content,position,asset_path").eq("course_id", courseId).order("position", { ascending: true }),
       ]);
       const { data: user } = await supabase.auth.getUser();
       const { data: enrollment } = user.user ? await (supabase as any).from("course_enrollments").select("status").eq("course_id", courseId).eq("student_id", user.user.id).maybeSingle() : { data: null };
-      if (!enrollment || enrollment.status !== "accepted") toast.error("This course is only available to enrolled students.");
+      setEnrollmentStatus((enrollment?.status as "pending" | "accepted" | "rejected" | undefined) ?? null);
       setCourse(courseData as Course | null);
-      setLessons((lessonData ?? []) as Lesson[]);
+      setLessons(enrollment?.status === "accepted" ? (lessonData ?? []) as Lesson[] : []);
       setLoading(false);
     })();
   }, [courseId]);
@@ -43,10 +44,20 @@ function CourseLearningPage() {
         <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">{course.description || "A practical course from the DevPulse community."}</p>
         {course.repo_url && <a href={course.repo_url} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 text-sm text-primary hover:underline"><Github className="size-4" /> Open course repository</a>}
       </header>
+      {enrollmentStatus !== "accepted" ? (
+        <section className="bento-card p-8 text-center">
+          <LockKeyhole className="mx-auto mb-3 text-primary" />
+          <h2 className="font-display text-2xl font-semibold">{enrollmentStatus === "pending" ? "Your request is pending" : enrollmentStatus === "rejected" ? "Enrollment was declined" : "Join this course first"}</h2>
+          <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted-foreground">{enrollmentStatus === "pending" ? "Your teacher must accept your request before lessons and meetings become available." : enrollmentStatus === "rejected" ? "Ask the teacher if you would like to request access again." : "Return to the courses page to send an enrollment request."}</p>
+          <Link to="/courses"><Button className="mt-5">Back to courses</Button></Link>
+        </section>
+      ) : <>
+      {course.meeting_url && <section className="mb-6 rounded-2xl border border-primary/30 bg-primary/5 p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Live learning</p><h2 className="mt-2 font-display text-xl font-semibold">{course.meeting_title || "Course meeting"}</h2>{course.meeting_at && <p className="mt-1 text-sm text-muted-foreground">{new Date(course.meeting_at).toLocaleString()}</p>}<a href={course.meeting_url} target="_blank" rel="noreferrer"><Button className="mt-4">Join meeting</Button></a></section>}
       <section className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
         <aside className="bento-card h-fit p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Course map</p><h2 className="mt-2 font-display text-2xl font-semibold">{lessons.length} lessons</h2><p className="mt-2 text-sm text-muted-foreground">Work through each lesson at your own pace.</p><div className="mt-5 flex items-center gap-2 text-sm text-primary"><CheckCircle2 className="size-4" /> Enrolled and unlocked</div></aside>
         <div className="space-y-3">{lessons.length ? lessons.map((lesson, index) => <article key={lesson.id} className="bento-card p-5 sm:p-6"><div className="flex gap-4"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">{index + 1}</span><div className="min-w-0"><h2 className="font-display text-xl font-semibold">{lesson.title}</h2><p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{lesson.content || "This lesson is ready to explore."}</p>{lesson.asset_path && <a href={lesson.asset_path} target="_blank" rel="noreferrer" className="mt-4 inline-block text-sm font-medium text-primary hover:underline">Open lesson resource</a>}</div></div></article>) : <div className="bento-card p-10 text-center"><LockKeyhole className="mx-auto mb-3 text-primary" /><p className="font-medium">Lessons are coming soon.</p><p className="mt-1 text-sm text-muted-foreground">Your teacher has not published lesson content yet.</p></div>}</div>
       </section>
+      </>}
     </div>
   </main>;
 }
