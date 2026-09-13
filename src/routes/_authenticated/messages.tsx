@@ -43,9 +43,16 @@ function MessagesPage() {
     queryKey: ["message-contacts", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("user_follows").select("following_id, follower_id").or(`follower_id.eq.${userId},following_id.eq.${userId}`);
-      if (error) throw error;
-      const ids = [...new Set((data ?? []).map((row) => row.follower_id === userId ? row.following_id : row.follower_id))];
+      const { data: followRows, error: followError } = await supabase.from("user_follows").select("following_id, follower_id").or(`follower_id.eq.${userId},following_id.eq.${userId}`);
+      if (followError) throw followError;
+      const { data: messageRows, error: messageError } = await supabase
+        .from("direct_messages")
+        .select("sender_id, recipient_id")
+        .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`);
+      if (messageError) throw messageError;
+      const followIds = (followRows ?? []).map((row) => row.follower_id === userId ? row.following_id : row.follower_id);
+      const messageIds = (messageRows ?? []).map((row) => row.sender_id === userId ? row.recipient_id : row.sender_id);
+      const ids = [...new Set([...followIds, ...messageIds])];
       if (!ids.length) return [] as Contact[];
       const result = await supabase.from("profiles").select("user_id, username, display_name, avatar_url").in("user_id", ids);
       if (result.error) throw result.error;
@@ -70,8 +77,12 @@ function MessagesPage() {
   useEffect(() => {
     if (!userId || !selectedId) return;
     const unread = messages.filter((message) => message.recipient_id === userId && !message.read_at).map((message) => message.id);
-    if (unread.length) void supabase.from("direct_messages").update({ read_at: new Date().toISOString() }).in("id", unread);
-  }, [messages, selectedId, userId]);
+    if (unread.length) {
+      void supabase.from("direct_messages").update({ read_at: new Date().toISOString() }).in("id", unread).then(() => {
+        void queryClient.invalidateQueries({ queryKey: ["unread-message-count", userId] });
+      });
+    }
+  }, [messages, queryClient, selectedId, userId]);
 
   useEffect(() => {
     if (!userId || !selectedId) return;

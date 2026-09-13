@@ -18,6 +18,7 @@ import {
   History,
   ScrollText,
   GraduationCap,
+  Bell,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useProfile } from "@/hooks/useSession";
@@ -53,6 +54,21 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
       return !!data;
     },
   });
+  const { data: unreadMessageCount = 0 } = useQuery({
+    queryKey: ["unread-message-count", userId],
+    enabled: !!userId,
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("direct_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("recipient_id", userId!)
+        .is("read_at", null);
+      if (error) return 0;
+      return count ?? 0;
+    },
+  });
+
   const teacherItems = ["teacher", "developer"].includes(
     (profile as { role?: string } | undefined)?.role ?? "",
   )
@@ -174,6 +190,19 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
           </button>
           <h1 className="font-display text-base font-semibold">{title}</h1>
           <div className="ml-auto flex items-center gap-3">
+            <Link
+              to="/messages"
+              className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label={unreadMessageCount ? `${unreadMessageCount} unread messages` : "Messages"}
+              title={unreadMessageCount ? `${unreadMessageCount} unread messages` : "Messages"}
+            >
+              <Bell className="h-4 w-4" />
+              {unreadMessageCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-4 text-primary-foreground">
+                  {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                </span>
+              )}
+            </Link>
             <button
               onClick={() =>
                 document.dispatchEvent(
