@@ -54,20 +54,29 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
       return !!data;
     },
   });
-  const { data: unreadMessageCount = 0 } = useQuery({
-    queryKey: ["unread-message-count", userId],
+  const { data: notifications = [] } = useQuery({
+    queryKey: ["notifications", userId],
     enabled: !!userId,
     refetchInterval: 15000,
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("direct_messages")
-        .select("id", { count: "exact", head: true })
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id, kind, title, body, href, read_at, created_at")
         .eq("recipient_id", userId!)
-        .is("read_at", null);
-      if (error) return 0;
-      return count ?? 0;
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) return [];
+      return data ?? [];
     },
   });
+  const unreadNotificationCount = notifications.filter((notification) => !notification.read_at).length;
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const markNotificationRead = async (id: string, href?: string | null) => {
+    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
+    void queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
+    if (href) navigate({ to: href as never });
+  };
 
   const teacherItems = ["teacher", "developer"].includes(
     (profile as { role?: string } | undefined)?.role ?? "",
@@ -190,19 +199,37 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
           </button>
           <h1 className="font-display text-base font-semibold">{title}</h1>
           <div className="ml-auto flex items-center gap-3">
-            <Link
-              to="/messages"
-              className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label={unreadMessageCount ? `${unreadMessageCount} unread messages` : "Messages"}
-              title={unreadMessageCount ? `${unreadMessageCount} unread messages` : "Messages"}
-            >
-              <Bell className="h-4 w-4" />
-              {unreadMessageCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-4 text-primary-foreground">
-                  {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
-                </span>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setNotificationsOpen((open) => !open)}
+                className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label={unreadNotificationCount ? `${unreadNotificationCount} unread notifications` : "Notifications"}
+                aria-expanded={notificationsOpen}
+              >
+                <Bell className="h-4 w-4" />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-4 text-primary-foreground">
+                    {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                  </span>
+                )}
+              </button>
+              {notificationsOpen && (
+                <div className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-popover shadow-xl">
+                  <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                    <div><p className="font-medium">Notifications</p><p className="text-xs text-muted-foreground">Activity from your DevPulse network</p></div>
+                    {unreadNotificationCount > 0 && <span className="text-xs text-primary">{unreadNotificationCount} new</span>}
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.length === 0 ? <p className="px-4 py-8 text-center text-sm text-muted-foreground">You&apos;re all caught up.</p> : notifications.map((notification) => (
+                      <button key={notification.id} type="button" onClick={() => void markNotificationRead(notification.id, notification.href)} className={cn("block w-full border-b border-border px-4 py-3 text-left transition hover:bg-muted", !notification.read_at && "bg-primary/5")}>
+                        <div className="flex items-start gap-2"><span className={cn("mt-1 h-2 w-2 shrink-0 rounded-full", notification.read_at ? "bg-muted" : "bg-primary")} /><div className="min-w-0"><p className="text-sm font-medium">{notification.title}</p><p className="mt-0.5 text-xs text-muted-foreground">{notification.body}</p><p className="mt-1 text-[10px] text-muted-foreground">{new Date(notification.created_at).toLocaleString()}</p></div></div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
-            </Link>
+            </div>
             <button
               onClick={() =>
                 document.dispatchEvent(
