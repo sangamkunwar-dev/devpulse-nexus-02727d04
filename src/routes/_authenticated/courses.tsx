@@ -124,6 +124,9 @@ function CoursesPage() {
         setEnrollments((items) => ({ ...items, [courseId]: "accepted" }));
         toast.success("You joined the course.");
       }
+    } catch (error) {
+      console.error("[v0] Course enrollment checkout failed", error);
+      toast.error("Could not open payment. Please try again.");
     } finally {
       setJoiningCourseId(null);
     }
