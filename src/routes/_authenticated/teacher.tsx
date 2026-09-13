@@ -293,13 +293,9 @@ function TeacherDashboard() {
                       </p>
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openCourseManager(course.id)}
-                      >
-                        Manage course
-                      </Button>
+                      <Link to="/teacher/courses/$courseId" params={{ courseId: course.id }}>
+                        <Button variant="outline" size="sm">Manage course</Button>
+                      </Link>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -319,21 +315,7 @@ function TeacherDashboard() {
                 ))}
               </div>
             )}
-            {enrollments.length > 0 && (
-              <section className="bento-card mt-5 p-5 sm:p-6">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div><h2 className="font-display text-xl font-semibold">Student requests</h2><p className="text-sm text-muted-foreground">Approve paid enrollments before lessons are unlocked.</p></div>
-                  <GraduationCap className="text-primary" />
-                </div>
-                <div className="grid gap-3">
-                  {enrollments.map((enrollment) => <div key={enrollment.id} className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div><p className="font-medium">{enrollment.student?.display_name ?? enrollment.student?.username ?? "Student"}</p><p className="text-xs text-muted-foreground">{courses.find((course) => course.id === enrollment.course_id)?.title ?? "Course"} · {enrollment.status}</p></div>
-                    {enrollment.status === "pending" && <div className="flex gap-2"><Button size="sm" onClick={() => void updateEnrollment(enrollment, "accepted")}>Accept</Button><Button size="sm" variant="outline" onClick={() => void updateEnrollment(enrollment, "rejected")}>Decline</Button></div>}
-                  </div>)}
-                </div>
-              </section>
-            )}
-            {selectedCourse && (
+            {false && selectedCourse && (
               <section id="course-manager" className="bento-card mt-5 scroll-mt-6 p-6">
                 <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>

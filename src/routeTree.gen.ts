@@ -29,11 +29,13 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSnippetsRouteImport } from './routes/_authenticated/snippets'
 import { Route as AuthenticatedTeacherRouteImport } from './routes/_authenticated/teacher'
 import { Route as UUsernameRouteImport } from './routes/u.$username'
+import { Route as AuthenticatedCoursesCourseIdRouteImport } from './routes/_authenticated/courses.$courseId'
 import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
 import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
 import { Route as ApiTeacherFileRouteImport } from './routes/api/teacher/file'
 import { Route as ApiTeacherUploadRouteImport } from './routes/api/teacher/upload'
+import { Route as AuthenticatedTeacherCoursesCourseIdRouteImport } from './routes/_authenticated/teacher.courses.$courseId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -135,6 +137,12 @@ const UUsernameRoute = UUsernameRouteImport.update({
   path: '/u/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedCoursesCourseIdRoute =
+  AuthenticatedCoursesCourseIdRouteImport.update({
+    id: '/$courseId',
+    path: '/$courseId',
+    getParentRoute: () => AuthenticatedCoursesRoute,
+  } as any)
 const AuthenticatedReviewsIndexRoute =
   AuthenticatedReviewsIndexRouteImport.update({
     id: '/reviews/',
@@ -161,6 +169,12 @@ const ApiTeacherUploadRoute = ApiTeacherUploadRouteImport.update({
   path: '/api/teacher/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTeacherCoursesCourseIdRoute =
+  AuthenticatedTeacherCoursesCourseIdRouteImport.update({
+    id: '/courses/$courseId',
+    path: '/courses/$courseId',
+    getParentRoute: () => AuthenticatedTeacherRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -172,7 +186,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/audit': typeof AuthenticatedAuditRoute
-  '/courses': typeof AuthenticatedCoursesRoute
+  '/courses': typeof AuthenticatedCoursesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notes': typeof AuthenticatedNotesRoute
@@ -180,13 +194,15 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AuthenticatedProjectsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/snippets': typeof AuthenticatedSnippetsRoute
-  '/teacher': typeof AuthenticatedTeacherRoute
+  '/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
+  '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
   '/reviews/': typeof AuthenticatedReviewsIndexRoute
+  '/teacher/courses/$courseId': typeof AuthenticatedTeacherCoursesCourseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -198,7 +214,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/audit': typeof AuthenticatedAuditRoute
-  '/courses': typeof AuthenticatedCoursesRoute
+  '/courses': typeof AuthenticatedCoursesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notes': typeof AuthenticatedNotesRoute
@@ -206,13 +222,15 @@ export interface FileRoutesByTo {
   '/projects': typeof AuthenticatedProjectsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/snippets': typeof AuthenticatedSnippetsRoute
-  '/teacher': typeof AuthenticatedTeacherRoute
+  '/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
+  '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
   '/reviews': typeof AuthenticatedReviewsIndexRoute
+  '/teacher/courses/$courseId': typeof AuthenticatedTeacherCoursesCourseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -226,7 +244,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/audit': typeof AuthenticatedAuditRoute
-  '/_authenticated/courses': typeof AuthenticatedCoursesRoute
+  '/_authenticated/courses': typeof AuthenticatedCoursesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/notes': typeof AuthenticatedNotesRoute
@@ -234,13 +252,15 @@ export interface FileRoutesById {
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/snippets': typeof AuthenticatedSnippetsRoute
-  '/_authenticated/teacher': typeof AuthenticatedTeacherRoute
+  '/_authenticated/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
+  '/_authenticated/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
   '/_authenticated/reviews/': typeof AuthenticatedReviewsIndexRoute
+  '/_authenticated/teacher/courses/$courseId': typeof AuthenticatedTeacherCoursesCourseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -264,11 +284,13 @@ export interface FileRouteTypes {
     | '/snippets'
     | '/teacher'
     | '/u/$username'
+    | '/courses/$courseId'
     | '/reviews/$id'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
     | '/reviews/'
+    | '/teacher/courses/$courseId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -290,11 +312,13 @@ export interface FileRouteTypes {
     | '/snippets'
     | '/teacher'
     | '/u/$username'
+    | '/courses/$courseId'
     | '/reviews/$id'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
     | '/reviews'
+    | '/teacher/courses/$courseId'
   id:
     | '__root__'
     | '/'
@@ -317,11 +341,13 @@ export interface FileRouteTypes {
     | '/_authenticated/snippets'
     | '/_authenticated/teacher'
     | '/u/$username'
+    | '/_authenticated/courses/$courseId'
     | '/_authenticated/reviews/$id'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
     | '/_authenticated/reviews/'
+    | '/_authenticated/teacher/courses/$courseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -481,6 +507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/courses/$courseId': {
+      id: '/_authenticated/courses/$courseId'
+      path: '/$courseId'
+      fullPath: '/courses/$courseId'
+      preLoaderRoute: typeof AuthenticatedCoursesCourseIdRouteImport
+      parentRoute: typeof AuthenticatedCoursesRoute
+    }
     '/_authenticated/reviews/': {
       id: '/_authenticated/reviews/'
       path: '/reviews'
@@ -516,13 +549,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTeacherUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/teacher/courses/$courseId': {
+      id: '/_authenticated/teacher/courses/$courseId'
+      path: '/courses/$courseId'
+      fullPath: '/teacher/courses/$courseId'
+      preLoaderRoute: typeof AuthenticatedTeacherCoursesCourseIdRouteImport
+      parentRoute: typeof AuthenticatedTeacherRoute
+    }
   }
 }
+
+interface AuthenticatedCoursesRouteChildren {
+  AuthenticatedCoursesCourseIdRoute: typeof AuthenticatedCoursesCourseIdRoute
+}
+
+const AuthenticatedCoursesRouteChildren: AuthenticatedCoursesRouteChildren = {
+  AuthenticatedCoursesCourseIdRoute: AuthenticatedCoursesCourseIdRoute,
+}
+
+const AuthenticatedCoursesRouteWithChildren =
+  AuthenticatedCoursesRoute._addFileChildren(AuthenticatedCoursesRouteChildren)
+
+interface AuthenticatedTeacherRouteChildren {
+  AuthenticatedTeacherCoursesCourseIdRoute: typeof AuthenticatedTeacherCoursesCourseIdRoute
+}
+
+const AuthenticatedTeacherRouteChildren: AuthenticatedTeacherRouteChildren = {
+  AuthenticatedTeacherCoursesCourseIdRoute:
+    AuthenticatedTeacherCoursesCourseIdRoute,
+}
+
+const AuthenticatedTeacherRouteWithChildren =
+  AuthenticatedTeacherRoute._addFileChildren(AuthenticatedTeacherRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
-  AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRoute
+  AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedNotesRoute: typeof AuthenticatedNotesRoute
@@ -530,7 +593,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSnippetsRoute: typeof AuthenticatedSnippetsRoute
-  AuthenticatedTeacherRoute: typeof AuthenticatedTeacherRoute
+  AuthenticatedTeacherRoute: typeof AuthenticatedTeacherRouteWithChildren
   AuthenticatedReviewsIdRoute: typeof AuthenticatedReviewsIdRoute
   AuthenticatedReviewsIndexRoute: typeof AuthenticatedReviewsIndexRoute
 }
@@ -538,7 +601,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAuditRoute: AuthenticatedAuditRoute,
-  AuthenticatedCoursesRoute: AuthenticatedCoursesRoute,
+  AuthenticatedCoursesRoute: AuthenticatedCoursesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedNotesRoute: AuthenticatedNotesRoute,
@@ -546,7 +609,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSnippetsRoute: AuthenticatedSnippetsRoute,
-  AuthenticatedTeacherRoute: AuthenticatedTeacherRoute,
+  AuthenticatedTeacherRoute: AuthenticatedTeacherRouteWithChildren,
   AuthenticatedReviewsIdRoute: AuthenticatedReviewsIdRoute,
   AuthenticatedReviewsIndexRoute: AuthenticatedReviewsIndexRoute,
 }

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, CheckCircle2, ChevronDown, ChevronUp, Github, LockKeyhole, PlayCircle } from "lucide-react";
+import { BookOpen, CheckCircle2, Github, LockKeyhole, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -25,7 +25,6 @@ function CoursesPage() {
   const [enrollments, setEnrollments] = useState<Record<string, Enrollment["status"]>>({});
   const [lessons, setLessons] = useState<Record<string, Lesson[]>>({});
   const [teachers, setTeachers] = useState<Record<string, Teacher>>({});
-  const [openCourse, setOpenCourse] = useState<string | null>(null);
   useEffect(() => {
     void (async () => {
       const { data } = await (supabase as any)
@@ -102,30 +101,9 @@ function CoursesPage() {
                     <h3 className="mt-1 font-display text-xl font-semibold">{course.title}</h3>
                     <p className="mt-1 text-xs text-muted-foreground">By {teachers[course.teacher_id]?.display_name ?? teachers[course.teacher_id]?.username ?? "Community teacher"}</p>
                   </div>
-                  <Button variant="secondary" onClick={() => setOpenCourse(openCourse === course.id ? null : course.id)}>
-                    {openCourse === course.id ? <ChevronUp data-icon="inline-start" /> : <ChevronDown data-icon="inline-start" />}
-                    {openCourse === course.id ? "Hide lessons" : "Continue"}
-                  </Button>
-                  {openCourse === course.id && (
-                    <div className="col-span-full mt-2 border-t border-border pt-4">
-                      <p className="mb-3 text-sm font-medium">All lessons</p>
-                      {lessons[course.id]?.length ? (
-                        <ol className="flex flex-col gap-2">
-                          {lessons[course.id].map((lesson, index) => (
-                            <li key={lesson.id} className="rounded-lg bg-muted/40 px-3 py-2 text-sm">
-                              <span className="mr-2 text-primary">{index + 1}.</span>{lesson.title}
-                              {lesson.content && <p className="mt-1 text-xs text-muted-foreground">{lesson.content}</p>}
-                            </li>
-                          ))}
-                        </ol>
-                      ) : <p className="text-sm text-muted-foreground">No lessons have been added yet.</p>}
-                      {course.repo_url && (
-                        <a href={course.repo_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm text-primary hover:underline">
-                          <Github className="size-4" /> Open GitHub repository
-                        </a>
-                      )}
-                    </div>
-                  )}
+                  <Link to="/courses/$courseId" params={{ courseId: course.id }}>
+                    <Button variant="secondary"><PlayCircle data-icon="inline-start" /> Continue learning</Button>
+                  </Link>
                 </article>
               ))}
             </div>
