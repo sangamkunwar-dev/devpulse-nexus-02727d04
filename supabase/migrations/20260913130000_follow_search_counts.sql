@@ -5,7 +5,8 @@ returns table (
   username text,
   display_name text,
   avatar_url text,
-  is_following boolean
+  is_following boolean,
+  follows_you boolean
 )
 language sql
 stable
@@ -22,7 +23,13 @@ as $$
       from public.user_follows f
       where f.follower_id = (select auth.uid())
         and f.following_id = p.user_id
-    ) as is_following
+    ) as is_following,
+    exists (
+      select 1
+      from public.user_follows f
+      where f.follower_id = p.user_id
+        and f.following_id = (select auth.uid())
+    ) as follows_you
   from public.profiles p
   join auth.users au on au.id = p.user_id
   where (select auth.uid()) is not null

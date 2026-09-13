@@ -30,7 +30,7 @@ function DashboardPage() {
   const { userId } = useSession();
   const { data: profile, isLoading: profileLoading } = useProfile(userId);
   const [peopleSearch, setPeopleSearch] = useState("");
-  const [people, setPeople] = useState<Array<{ user_id: string; username: string | null; display_name: string | null; avatar_url: string | null; is_following: boolean }>>([]);
+  const [people, setPeople] = useState<Array<{ user_id: string; username: string | null; display_name: string | null; avatar_url: string | null; is_following: boolean; follows_you: boolean }>>([]);
   const [peopleError, setPeopleError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -156,7 +156,7 @@ function DashboardPage() {
                     className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:border-primary/50 hover:text-primary"
                   >
                     {person.is_following ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                    {person.is_following ? "Following" : "Follow"}
+                    {person.is_following ? "Following" : person.follows_you ? "Follow back" : "Follow"}
                   </button>
                 </div>
               ))}

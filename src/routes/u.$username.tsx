@@ -33,9 +33,12 @@ function PortfolioPage() {
     enabled: !!userId,
     queryFn: async () => {
       const { data: target } = await supabase.from("profiles").select("user_id").eq("username", username).maybeSingle();
-      if (!target || target.user_id === userId) return false;
-      const { data: follow } = await supabase.from("user_follows").select("follower_id").eq("follower_id", userId!).eq("following_id", target.user_id).maybeSingle();
-      return !!follow;
+      if (!target || target.user_id === userId) return { isFollowing: false, followsYou: false };
+      const [{ data: following }, { data: followsYou }] = await Promise.all([
+        supabase.from("user_follows").select("follower_id").eq("follower_id", userId!).eq("following_id", target.user_id).maybeSingle(),
+        supabase.from("user_follows").select("follower_id").eq("follower_id", target.user_id).eq("following_id", userId!).maybeSingle(),
+      ]);
+      return { isFollowing: !!following, followsYou: !!followsYou };
     },
   });
 
@@ -108,7 +111,7 @@ function PortfolioPage() {
 
   const toggleFollow = async () => {
     if (!userId || isOwnProfile) return;
-    if (viewerFollow) {
+    if (viewerFollow?.isFollowing) {
       const { error } = await supabase.from("user_follows").delete().eq("follower_id", userId).eq("following_id", profile.user_id);
       if (error) return toast.error("Could not unfollow this user");
       toast.success(`Unfollowed ${profile.username}`);
@@ -152,12 +155,12 @@ function PortfolioPage() {
               {!isOwnProfile && userId && (
                 <Button
                   size="sm"
-                  variant={viewerFollow ? "outline" : "default"}
+                  variant={viewerFollow?.isFollowing ? "outline" : "default"}
                   className="ml-auto shrink-0"
                   onClick={toggleFollow}
                 >
-                  {viewerFollow ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                  {viewerFollow ? "Following" : "Follow"}
+                  {viewerFollow?.isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                  {viewerFollow?.isFollowing ? "Following" : viewerFollow?.followsYou ? "Follow back" : "Follow"}
                 </Button>
               )}
             </div>
