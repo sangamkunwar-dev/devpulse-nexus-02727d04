@@ -293,9 +293,9 @@ function TeacherDashboard() {
                       </p>
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
-                      <Link to="/teacher/courses/$courseId" params={{ courseId: course.id }}>
+                      <a href={`/teacher/courses/${course.id}`}>
                         <Button variant="outline" size="sm">Manage course</Button>
-                      </Link>
+                      </a>
                       <Button
                         variant="ghost"
                         size="sm"

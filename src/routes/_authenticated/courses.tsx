@@ -101,9 +101,9 @@ function CoursesPage() {
                     <h3 className="mt-1 font-display text-xl font-semibold">{course.title}</h3>
                     <p className="mt-1 text-xs text-muted-foreground">By {teachers[course.teacher_id]?.display_name ?? teachers[course.teacher_id]?.username ?? "Community teacher"}</p>
                   </div>
-                  <Link to="/courses/$courseId" params={{ courseId: course.id }}>
-                    <Button variant="secondary"><PlayCircle data-icon="inline-start" /> Continue learning</Button>
-                  </Link>
+<a href={`/courses/${course.id}`}>
+                  <Button variant="secondary"><PlayCircle data-icon="inline-start" /> Continue learning</Button>
+                </a>
                 </article>
               ))}
             </div>
