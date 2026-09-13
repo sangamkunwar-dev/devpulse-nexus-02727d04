@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useSession } from "@/hooks/useSession";
+import { InstallButton } from "@/components/InstallButton";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -73,6 +74,7 @@ function Index() {
             <a href="#how" className="transition-colors hover:text-foreground">How it works</a>
           </nav>
           <div className="flex items-center gap-2">
+            <InstallButton variant="ghost" size="sm" className="hidden sm:inline-flex" />
             {session ? (
               <Link to="/dashboard">
                 <Button size="sm">
@@ -125,6 +127,7 @@ function Index() {
                   <GraduationCap className="h-4 w-4" /> Explore Learn Hub
                 </Button>
               </Link>
+              <InstallButton variant="outline" size="lg" />
             </div>
           </motion.div>
 

@@ -183,9 +183,7 @@ function RootComponent() {
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });
-    void navigator.serviceWorker?.getRegistrations().then((registrations) => {
-      void Promise.all(registrations.map((registration) => registration.unregister()));
-    });
+    void import("@/lib/pwa-register").then(({ registerPwa }) => registerPwa());
     return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

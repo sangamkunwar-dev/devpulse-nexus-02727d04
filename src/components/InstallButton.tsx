@@ -66,7 +66,7 @@ export function InstallButton({
       return;
     }
     toast.info(
-      "Your browser will show an install icon in the address bar. On desktop Chrome / Edge, look for the ⤓ icon.",
+      "Use your browser menu and choose Install DevPulse or Add to Home Screen. On desktop Chrome or Edge, look for the install icon in the address bar.",
     );
   };
 
