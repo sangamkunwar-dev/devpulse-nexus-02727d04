@@ -34,6 +34,7 @@ import { Route as AuthenticatedCoursesCourseIdRouteImport } from './routes/_auth
 import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
 import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
 import { Route as ApiPaymentsStripeCheckoutRouteImport } from './routes/api/payments/stripe-checkout'
+import { Route as ApiPaymentsStripeVerifyRouteImport } from './routes/api/payments/stripe-verify'
 import { Route as ApiPaymentsStripeWebhookRouteImport } from './routes/api/payments/stripe-webhook'
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
 import { Route as ApiTeacherFileRouteImport } from './routes/api/teacher/file'
@@ -168,6 +169,11 @@ const ApiPaymentsStripeCheckoutRoute =
     path: '/api/payments/stripe-checkout',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPaymentsStripeVerifyRoute = ApiPaymentsStripeVerifyRouteImport.update({
+  id: '/api/payments/stripe-verify',
+  path: '/api/payments/stripe-verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPaymentsStripeWebhookRoute =
   ApiPaymentsStripeWebhookRouteImport.update({
     id: '/api/payments/stripe-webhook',
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/payments/stripe-checkout': typeof ApiPaymentsStripeCheckoutRoute
+  '/api/payments/stripe-verify': typeof ApiPaymentsStripeVerifyRoute
   '/api/payments/stripe-webhook': typeof ApiPaymentsStripeWebhookRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/payments/stripe-checkout': typeof ApiPaymentsStripeCheckoutRoute
+  '/api/payments/stripe-verify': typeof ApiPaymentsStripeVerifyRoute
   '/api/payments/stripe-webhook': typeof ApiPaymentsStripeWebhookRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
@@ -284,6 +292,7 @@ export interface FileRoutesById {
   '/_authenticated/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/payments/stripe-checkout': typeof ApiPaymentsStripeCheckoutRoute
+  '/api/payments/stripe-verify': typeof ApiPaymentsStripeVerifyRoute
   '/api/payments/stripe-webhook': typeof ApiPaymentsStripeWebhookRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
@@ -317,6 +326,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId'
     | '/reviews/$id'
     | '/api/payments/stripe-checkout'
+    | '/api/payments/stripe-verify'
     | '/api/payments/stripe-webhook'
     | '/api/public/notify'
     | '/api/teacher/file'
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId'
     | '/reviews/$id'
     | '/api/payments/stripe-checkout'
+    | '/api/payments/stripe-verify'
     | '/api/payments/stripe-webhook'
     | '/api/public/notify'
     | '/api/teacher/file'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/_authenticated/courses/$courseId'
     | '/_authenticated/reviews/$id'
     | '/api/payments/stripe-checkout'
+    | '/api/payments/stripe-verify'
     | '/api/payments/stripe-webhook'
     | '/api/public/notify'
     | '/api/teacher/file'
@@ -399,6 +411,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   UUsernameRoute: typeof UUsernameRoute
   ApiPaymentsStripeCheckoutRoute: typeof ApiPaymentsStripeCheckoutRoute
+  ApiPaymentsStripeVerifyRoute: typeof ApiPaymentsStripeVerifyRoute
   ApiPaymentsStripeWebhookRoute: typeof ApiPaymentsStripeWebhookRoute
   ApiPublicNotifyRoute: typeof ApiPublicNotifyRoute
   ApiTeacherFileRoute: typeof ApiTeacherFileRoute
@@ -582,6 +595,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPaymentsStripeCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/payments/stripe-verify': {
+      id: '/api/payments/stripe-verify'
+      path: '/api/payments/stripe-verify'
+      fullPath: '/api/payments/stripe-verify'
+      preLoaderRoute: typeof ApiPaymentsStripeVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/payments/stripe-webhook': {
       id: '/api/payments/stripe-webhook'
       path: '/api/payments/stripe-webhook'
@@ -691,6 +711,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   UUsernameRoute: UUsernameRoute,
   ApiPaymentsStripeCheckoutRoute: ApiPaymentsStripeCheckoutRoute,
+  ApiPaymentsStripeVerifyRoute: ApiPaymentsStripeVerifyRoute,
   ApiPaymentsStripeWebhookRoute: ApiPaymentsStripeWebhookRoute,
   ApiPublicNotifyRoute: ApiPublicNotifyRoute,
   ApiTeacherFileRoute: ApiTeacherFileRoute,

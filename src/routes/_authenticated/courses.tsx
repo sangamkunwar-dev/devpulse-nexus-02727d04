@@ -61,6 +61,22 @@ function CoursesPage() {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+    if (params.get("payment") !== "success" || !sessionId) return;
+    void (async () => {
+      const { data: session } = await supabase.auth.getSession();
+      const response = await fetch("/api/payments/stripe-verify", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.session?.access_token ?? ""}` }, body: JSON.stringify({ sessionId }) });
+      const result = await response.json() as { verified?: boolean; error?: string };
+      if (result.verified) {
+        toast.success("Payment verified. Your course is ready.");
+        window.history.replaceState({}, "", "/courses");
+        window.location.reload();
+      } else toast.error(result.error ?? "Payment verification failed.");
+    })();
+  }, []);
+
+  useEffect(() => {
     let userId = "";
     let channel: ReturnType<typeof supabase.channel> | null = null;
     void supabase.auth.getUser().then(({ data }) => {
