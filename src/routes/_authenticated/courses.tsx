@@ -96,7 +96,7 @@ function CoursesPage() {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {courses.filter((course) => enrollments[course.id] === "accepted").map((course) => (
-                <article key={`enrolled-${course.id}`} className="bento-card flex flex-col items-stretch justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
+                <article id={`enrolled-course-${course.id}`} key={`enrolled-${course.id}`} className="bento-card flex flex-col items-stretch justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
                   <div>
                     <p className="text-xs font-medium text-primary">ENROLLED</p>
                     <h3 className="mt-1 font-display text-xl font-semibold">{course.title}</h3>
@@ -156,19 +156,32 @@ function CoursesPage() {
                     )}
                   </div>
                 </div>
-                <Button
-                  onClick={() => void enroll(course.id)}
-                  disabled={Boolean(enrollments[course.id])}
-                >
-                  {enrollments[course.id] ? (
-                    <>
-                      <CheckCircle2 data-icon="inline-start" />
-                      Enrolled
-                    </>
-                  ) : (
-                    "Join course"
-                  )}
-                </Button>
+                {enrollments[course.id] === "accepted" ? (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setOpenCourse(course.id);
+                      document.getElementById(`enrolled-course-${course.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }}
+                  >
+                    <PlayCircle data-icon="inline-start" />
+                    Continue course
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => void enroll(course.id)}
+                    disabled={Boolean(enrollments[course.id])}
+                  >
+                    {enrollments[course.id] ? (
+                      <>
+                        <CheckCircle2 data-icon="inline-start" />
+                        {enrollments[course.id] === "pending" ? "Request pending" : "Enrolled"}
+                      </>
+                    ) : (
+                      "Join course"
+                    )}
+                  </Button>
+                )}
               </article>
             ))}
           </div>
