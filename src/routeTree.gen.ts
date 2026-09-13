@@ -23,6 +23,7 @@ import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
+import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/notes'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
@@ -108,6 +109,11 @@ const AuthenticatedLeaderboardRoute =
     path: '/leaderboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedNotesRoute = AuthenticatedNotesRouteImport.update({
   id: '/notes',
   path: '/notes',
@@ -196,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/messages': typeof AuthenticatedMessagesRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/messages': typeof AuthenticatedMessagesRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notes': typeof AuthenticatedNotesRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/history'
     | '/leaderboard'
+    | '/messages'
     | '/notes'
     | '/onboarding'
     | '/projects'
@@ -316,6 +326,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/history'
     | '/leaderboard'
+    | '/messages'
     | '/notes'
     | '/onboarding'
     | '/projects'
@@ -346,6 +357,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
     | '/_authenticated/leaderboard'
+    | '/_authenticated/messages'
     | '/_authenticated/notes'
     | '/_authenticated/onboarding'
     | '/_authenticated/projects'
@@ -475,6 +487,13 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof AuthenticatedLeaderboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/messages': {
+      id: '/_authenticated/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/notes': {
@@ -608,6 +627,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
+  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotesRoute: typeof AuthenticatedNotesRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
@@ -625,6 +645,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
+  AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotesRoute: AuthenticatedNotesRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,

@@ -13,6 +13,7 @@ import {
   Search,
   UserPlus,
   UserCheck,
+  MessageCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
@@ -158,6 +159,15 @@ function DashboardPage() {
                     {person.is_following ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
                     {person.is_following ? "Following" : person.follows_you ? "Follow back" : "Follow"}
                   </button>
+                  <Link
+                    to="/messages"
+                    search={{ userId: person.user_id, username: person.username ?? "" }}
+                    aria-label={`Message ${person.display_name ?? person.username ?? "user"}`}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:border-primary/50 hover:text-primary"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Message
+                  </Link>
                 </div>
               ))}
             </div>
