@@ -35,6 +35,9 @@ import { Route as AuthenticatedCoursesCourseIdRouteImport } from './routes/_auth
 import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
 import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
 import { Route as ApiAuthSignupLimitRouteImport } from './routes/api/auth/signup-limit'
+import { Route as ApiMessagesEmailRouteImport } from './routes/api/messages/email'
+import { Route as ApiMessagesFileRouteImport } from './routes/api/messages/file'
+import { Route as ApiMessagesUploadRouteImport } from './routes/api/messages/upload'
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
 import { Route as ApiTeacherFileRouteImport } from './routes/api/teacher/file'
 import { Route as ApiTeacherUploadRouteImport } from './routes/api/teacher/upload'
@@ -172,6 +175,21 @@ const ApiAuthSignupLimitRoute = ApiAuthSignupLimitRouteImport.update({
   path: '/api/auth/signup-limit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMessagesEmailRoute = ApiMessagesEmailRouteImport.update({
+  id: '/api/messages/email',
+  path: '/api/messages/email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMessagesFileRoute = ApiMessagesFileRouteImport.update({
+  id: '/api/messages/file',
+  path: '/api/messages/file',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMessagesUploadRoute = ApiMessagesUploadRouteImport.update({
+  id: '/api/messages/upload',
+  path: '/api/messages/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicNotifyRoute = ApiPublicNotifyRouteImport.update({
   id: '/api/public/notify',
   path: '/api/public/notify',
@@ -219,6 +237,9 @@ export interface FileRoutesByFullPath {
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/auth/signup-limit': typeof ApiAuthSignupLimitRoute
+  '/api/messages/email': typeof ApiMessagesEmailRoute
+  '/api/messages/file': typeof ApiMessagesFileRoute
+  '/api/messages/upload': typeof ApiMessagesUploadRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -250,6 +271,9 @@ export interface FileRoutesByTo {
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/auth/signup-limit': typeof ApiAuthSignupLimitRoute
+  '/api/messages/email': typeof ApiMessagesEmailRoute
+  '/api/messages/file': typeof ApiMessagesFileRoute
+  '/api/messages/upload': typeof ApiMessagesUploadRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -283,6 +307,9 @@ export interface FileRoutesById {
   '/_authenticated/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/auth/signup-limit': typeof ApiAuthSignupLimitRoute
+  '/api/messages/email': typeof ApiMessagesEmailRoute
+  '/api/messages/file': typeof ApiMessagesFileRoute
+  '/api/messages/upload': typeof ApiMessagesUploadRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -316,6 +343,9 @@ export interface FileRouteTypes {
     | '/courses/$courseId'
     | '/reviews/$id'
     | '/api/auth/signup-limit'
+    | '/api/messages/email'
+    | '/api/messages/file'
+    | '/api/messages/upload'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -347,6 +377,9 @@ export interface FileRouteTypes {
     | '/courses/$courseId'
     | '/reviews/$id'
     | '/api/auth/signup-limit'
+    | '/api/messages/email'
+    | '/api/messages/file'
+    | '/api/messages/upload'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -379,6 +412,9 @@ export interface FileRouteTypes {
     | '/_authenticated/courses/$courseId'
     | '/_authenticated/reviews/$id'
     | '/api/auth/signup-limit'
+    | '/api/messages/email'
+    | '/api/messages/file'
+    | '/api/messages/upload'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -397,6 +433,9 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   UUsernameRoute: typeof UUsernameRoute
   ApiAuthSignupLimitRoute: typeof ApiAuthSignupLimitRoute
+  ApiMessagesEmailRoute: typeof ApiMessagesEmailRoute
+  ApiMessagesFileRoute: typeof ApiMessagesFileRoute
+  ApiMessagesUploadRoute: typeof ApiMessagesUploadRoute
   ApiPublicNotifyRoute: typeof ApiPublicNotifyRoute
   ApiTeacherFileRoute: typeof ApiTeacherFileRoute
   ApiTeacherUploadRoute: typeof ApiTeacherUploadRoute
@@ -586,6 +625,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSignupLimitRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/messages/email': {
+      id: '/api/messages/email'
+      path: '/api/messages/email'
+      fullPath: '/api/messages/email'
+      preLoaderRoute: typeof ApiMessagesEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/messages/file': {
+      id: '/api/messages/file'
+      path: '/api/messages/file'
+      fullPath: '/api/messages/file'
+      preLoaderRoute: typeof ApiMessagesFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/messages/upload': {
+      id: '/api/messages/upload'
+      path: '/api/messages/upload'
+      fullPath: '/api/messages/upload'
+      preLoaderRoute: typeof ApiMessagesUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/notify': {
       id: '/api/public/notify'
       path: '/api/public/notify'
@@ -690,6 +750,9 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   UUsernameRoute: UUsernameRoute,
   ApiAuthSignupLimitRoute: ApiAuthSignupLimitRoute,
+  ApiMessagesEmailRoute: ApiMessagesEmailRoute,
+  ApiMessagesFileRoute: ApiMessagesFileRoute,
+  ApiMessagesUploadRoute: ApiMessagesUploadRoute,
   ApiPublicNotifyRoute: ApiPublicNotifyRoute,
   ApiTeacherFileRoute: ApiTeacherFileRoute,
   ApiTeacherUploadRoute: ApiTeacherUploadRoute,
