@@ -38,6 +38,7 @@ import { Route as ApiAuthSignupLimitRouteImport } from './routes/api/auth/signup
 import { Route as ApiMessagesEmailRouteImport } from './routes/api/messages/email'
 import { Route as ApiMessagesFileRouteImport } from './routes/api/messages/file'
 import { Route as ApiMessagesUploadRouteImport } from './routes/api/messages/upload'
+import { Route as ApiNotificationsEmailRouteImport } from './routes/api/notifications/email'
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
 import { Route as ApiTeacherFileRouteImport } from './routes/api/teacher/file'
 import { Route as ApiTeacherUploadRouteImport } from './routes/api/teacher/upload'
@@ -190,6 +191,11 @@ const ApiMessagesUploadRoute = ApiMessagesUploadRouteImport.update({
   path: '/api/messages/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiNotificationsEmailRoute = ApiNotificationsEmailRouteImport.update({
+  id: '/api/notifications/email',
+  path: '/api/notifications/email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicNotifyRoute = ApiPublicNotifyRouteImport.update({
   id: '/api/public/notify',
   path: '/api/public/notify',
@@ -240,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/api/messages/email': typeof ApiMessagesEmailRoute
   '/api/messages/file': typeof ApiMessagesFileRoute
   '/api/messages/upload': typeof ApiMessagesUploadRoute
+  '/api/notifications/email': typeof ApiNotificationsEmailRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -274,6 +281,7 @@ export interface FileRoutesByTo {
   '/api/messages/email': typeof ApiMessagesEmailRoute
   '/api/messages/file': typeof ApiMessagesFileRoute
   '/api/messages/upload': typeof ApiMessagesUploadRoute
+  '/api/notifications/email': typeof ApiNotificationsEmailRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/api/messages/email': typeof ApiMessagesEmailRoute
   '/api/messages/file': typeof ApiMessagesFileRoute
   '/api/messages/upload': typeof ApiMessagesUploadRoute
+  '/api/notifications/email': typeof ApiNotificationsEmailRoute
   '/api/public/notify': typeof ApiPublicNotifyRoute
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/api/messages/email'
     | '/api/messages/file'
     | '/api/messages/upload'
+    | '/api/notifications/email'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/api/messages/email'
     | '/api/messages/file'
     | '/api/messages/upload'
+    | '/api/notifications/email'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -415,6 +426,7 @@ export interface FileRouteTypes {
     | '/api/messages/email'
     | '/api/messages/file'
     | '/api/messages/upload'
+    | '/api/notifications/email'
     | '/api/public/notify'
     | '/api/teacher/file'
     | '/api/teacher/upload'
@@ -436,6 +448,7 @@ export interface RootRouteChildren {
   ApiMessagesEmailRoute: typeof ApiMessagesEmailRoute
   ApiMessagesFileRoute: typeof ApiMessagesFileRoute
   ApiMessagesUploadRoute: typeof ApiMessagesUploadRoute
+  ApiNotificationsEmailRoute: typeof ApiNotificationsEmailRoute
   ApiPublicNotifyRoute: typeof ApiPublicNotifyRoute
   ApiTeacherFileRoute: typeof ApiTeacherFileRoute
   ApiTeacherUploadRoute: typeof ApiTeacherUploadRoute
@@ -646,6 +659,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMessagesUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/notifications/email': {
+      id: '/api/notifications/email'
+      path: '/api/notifications/email'
+      fullPath: '/api/notifications/email'
+      preLoaderRoute: typeof ApiNotificationsEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/notify': {
       id: '/api/public/notify'
       path: '/api/public/notify'
@@ -753,6 +773,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMessagesEmailRoute: ApiMessagesEmailRoute,
   ApiMessagesFileRoute: ApiMessagesFileRoute,
   ApiMessagesUploadRoute: ApiMessagesUploadRoute,
+  ApiNotificationsEmailRoute: ApiNotificationsEmailRoute,
   ApiPublicNotifyRoute: ApiPublicNotifyRoute,
   ApiTeacherFileRoute: ApiTeacherFileRoute,
   ApiTeacherUploadRoute: ApiTeacherUploadRoute,

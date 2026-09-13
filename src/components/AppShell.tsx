@@ -1,4 +1,5 @@
 import { type ReactNode, useState } from "react";
+import { toast } from "sonner";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -76,6 +77,12 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
     await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
     void queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
     if (href) navigate({ to: href as never });
+  };
+
+  const emailNotification = async (id: string) => {
+    const { data } = await supabase.auth.getSession();
+    const response = await fetch("/api/notifications/email", { method: "POST", headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}`, "Content-Type": "application/json" }, body: JSON.stringify({ notificationId: id }) });
+    if (!response.ok) throw new Error("Email could not be sent");
   };
 
   const teacherItems = ["teacher", "developer"].includes(
@@ -222,9 +229,9 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
                   </div>
                   <div className="max-h-96 overflow-y-auto">
                     {notifications.length === 0 ? <p className="px-4 py-8 text-center text-sm text-muted-foreground">You&apos;re all caught up.</p> : notifications.map((notification) => (
-                      <button key={notification.id} type="button" onClick={() => void markNotificationRead(notification.id, notification.href)} className={cn("block w-full border-b border-border px-4 py-3 text-left transition hover:bg-muted", !notification.read_at && "bg-primary/5")}>
+                      <div key={notification.id} className={cn("border-b border-border px-4 py-3 transition hover:bg-muted", !notification.read_at && "bg-primary/5")}><button type="button" onClick={() => void markNotificationRead(notification.id, notification.href)} className="block w-full text-left">
                         <div className="flex items-start gap-2"><span className={cn("mt-1 h-2 w-2 shrink-0 rounded-full", notification.read_at ? "bg-muted" : "bg-primary")} /><div className="min-w-0"><p className="text-sm font-medium">{notification.title}</p><p className="mt-0.5 text-xs text-muted-foreground">{notification.body}</p><p className="mt-1 text-[10px] text-muted-foreground">{new Date(notification.created_at).toLocaleString()}</p></div></div>
-                      </button>
+                      </button><button type="button" onClick={() => void emailNotification(notification.id).then(() => toast.success("Notification email sent.")).catch(() => toast.error("Email could not be sent."))} className="mt-2 text-[11px] font-medium text-primary hover:underline">Send to email</button></div>
                     ))}
                   </div>
                 </div>
