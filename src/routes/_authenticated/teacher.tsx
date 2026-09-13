@@ -38,6 +38,13 @@ function TeacherDashboard() {
   const [lessonBusy, setLessonBusy] = useState(false);
   const [uploadBusy, setUploadBusy] = useState(false);
 
+  const openCourseManager = (courseId: string) => {
+    setSelectedCourse(courseId);
+    window.requestAnimationFrame(() => {
+      document.getElementById("course-manager")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
   const loadCourses = async () => {
     const { data, error } = await (supabase as any)
       .from("courses")
@@ -289,7 +296,7 @@ function TeacherDashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedCourse(course.id)}
+                        onClick={() => openCourseManager(course.id)}
                       >
                         Manage course
                       </Button>
@@ -327,7 +334,33 @@ function TeacherDashboard() {
               </section>
             )}
             {selectedCourse && (
-              <section className="bento-card mt-5 p-6">
+              <section id="course-manager" className="bento-card mt-5 scroll-mt-6 p-6">
+                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Course manager</p>
+                    <h2 className="mt-1 font-display text-2xl font-semibold">{courses.find((course) => course.id === selectedCourse)?.title}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">Manage lessons and review students for this course.</p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setSelectedCourse(null)}>Close manager</Button>
+                </div>
+                <div className="mb-5 rounded-xl border border-border bg-muted/20 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div><h3 className="font-semibold">Students in this course</h3><p className="text-xs text-muted-foreground">Accept or decline requests here.</p></div>
+                    <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{enrollments.filter((enrollment) => enrollment.course_id === selectedCourse).length} total</span>
+                  </div>
+                  {enrollments.filter((enrollment) => enrollment.course_id === selectedCourse).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No students have joined this course yet.</p>
+                  ) : (
+                    <div className="grid gap-2">
+                      {enrollments.filter((enrollment) => enrollment.course_id === selectedCourse).map((enrollment) => (
+                        <div key={enrollment.id} className="flex flex-col gap-3 rounded-lg border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div><p className="font-medium">{enrollment.student?.display_name ?? enrollment.student?.username ?? "Student"}</p><p className="text-xs capitalize text-muted-foreground">{enrollment.status}</p></div>
+                          {enrollment.status === "pending" && <div className="flex gap-2"><Button size="sm" onClick={() => void updateEnrollment(enrollment, "accepted")}>Accept</Button><Button size="sm" variant="outline" onClick={() => void updateEnrollment(enrollment, "rejected")}>Decline</Button></div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div className="mb-4 flex items-center gap-3">
                   <Video className="text-primary" />
                   <div>
