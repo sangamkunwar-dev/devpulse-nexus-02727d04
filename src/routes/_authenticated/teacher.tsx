@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen, FileUp, Github, GraduationCap, Plus, Video } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,7 @@ function TeacherDashboard() {
   const [courseLessons, setCourseLessons] = useState<Lesson[]>([]);
   const [lessonBusy, setLessonBusy] = useState(false);
   const [uploadBusy, setUploadBusy] = useState(false);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   const openCourseManager = (courseId: string) => {
     setSelectedCourse(courseId);
@@ -293,9 +294,9 @@ function TeacherDashboard() {
                       </p>
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
-                      <a href={`/teacher/courses/${course.id}`}>
+                      <Link to="/teacher/courses/$courseId" params={{ courseId: course.id }}>
                         <Button variant="outline" size="sm">Manage course</Button>
-                      </a>
+                      </Link>
                       <Button
                         variant="ghost"
                         size="sm"

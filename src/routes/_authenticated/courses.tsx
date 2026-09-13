@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen, CheckCircle2, Github, LockKeyhole, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,10 +21,12 @@ type Lesson = { id: string; course_id: string; title: string; content: string | 
 type Teacher = { user_id: string; username: string; display_name: string | null };
 
 function CoursesPage() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrollments, setEnrollments] = useState<Record<string, Enrollment["status"]>>({});
   const [lessons, setLessons] = useState<Record<string, Lesson[]>>({});
   const [teachers, setTeachers] = useState<Record<string, Teacher>>({});
+
   useEffect(() => {
     void (async () => {
       const { data } = await (supabase as any)
@@ -101,9 +103,9 @@ function CoursesPage() {
                     <h3 className="mt-1 font-display text-xl font-semibold">{course.title}</h3>
                     <p className="mt-1 text-xs text-muted-foreground">By {teachers[course.teacher_id]?.display_name ?? teachers[course.teacher_id]?.username ?? "Community teacher"}</p>
                   </div>
-<a href={`/courses/${course.id}`}>
+<Link to="/courses/$courseId" params={{ courseId: course.id }}>
                   <Button variant="secondary"><PlayCircle data-icon="inline-start" /> Continue learning</Button>
-                </a>
+                </Link>
                 </article>
               ))}
             </div>
