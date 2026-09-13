@@ -24,20 +24,32 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [role, setRole] = useState<"student" | "teacher">("student");
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
-    });
-  }, [navigate]);
+  const routeAfterAuth = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    navigate({ to: profile?.role === "teacher" ? "/teacher" : "/dashboard", replace: true });
+  };
 
-  // FIX: Using direct supabase client instead of lovable wrapper
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session) void routeAfterAuth(data.session.user.id);
+    });
+    return () => { active = false; };
+  }, []);
+
+  // Supabase returns to this route after OAuth; route only after a real session exists.
+
   const handleGoogle = async () => {
     try {
       setBusy(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/auth`,
         },
       });
 
@@ -63,7 +75,7 @@ function AuthPage() {
           email: email.trim(),
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}/auth`,
             data: { role, display_name: email.trim().split("@")[0] },
           },
         });
@@ -71,13 +83,13 @@ function AuthPage() {
         toast.success("Account created! Check your email to confirm, then sign in.");
         setMode("signin");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
         });
         if (error) throw error;
         toast.success("Welcome back!");
-        navigate({ to: "/dashboard", replace: true });
+        await routeAfterAuth(data.user.id);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Authentication failed";
