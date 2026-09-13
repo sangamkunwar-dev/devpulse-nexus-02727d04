@@ -8,7 +8,6 @@ import {
   NotebookPen,
   Code2,
   GitPullRequest,
-  Bug,
   Trophy,
   Settings,
   Home,
@@ -28,6 +27,10 @@ export function CommandPalette() {
   const { session, userId } = useSession();
   const { data: profile } = useProfile(userId);
   const [snippets, setSnippets] = useState<{ id: string; title: string; language: string }[]>([]);
+  const [people, setPeople] = useState<
+    { user_id: string; username: string | null; display_name: string | null; avatar_url: string | null; is_following: boolean }[]
+  >([]);
+  const [personSearch, setPersonSearch] = useState("");
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -51,6 +54,30 @@ export function CommandPalette() {
         .then(({ data }) => setSnippets(data ?? []));
     }
   }, [open, userId]);
+
+  useEffect(() => {
+    const term = personSearch.trim();
+    if (!open || !userId || term.length < 2) {
+      setPeople([]);
+      return;
+    }
+    const timer = window.setTimeout(async () => {
+      const { data } = await supabase.rpc("search_users", { search_term: term });
+      setPeople((data as typeof people) ?? []);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [open, userId, personSearch]);
+
+  const toggleFollow = async (person: (typeof people)[number]) => {
+    if (!userId) return;
+    if (person.is_following) {
+      await supabase.from("user_follows").delete().eq("follower_id", userId).eq("following_id", person.user_id);
+    } else {
+      await supabase.from("user_follows").insert({ follower_id: userId, following_id: person.user_id });
+    }
+    setPeople((current) => current.map((item) => item.user_id === person.user_id ? { ...item, is_following: !item.is_following } : item));
+    toast.success(person.is_following ? `Unfollowed ${person.username ?? "user"}` : `Following ${person.username ?? "user"}`);
+  };
 
   const go = (to: string) => {
     setOpen(false);
@@ -83,7 +110,9 @@ export function CommandPalette() {
       <div className="flex items-center gap-2 border-b border-border px-4">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Command.Input
-          placeholder="Type a command or search…"
+          placeholder="Search people by username or email…"
+          value={personSearch}
+          onValueChange={setPersonSearch}
           className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
         <kbd className="kbd-chip">esc</kbd>
@@ -92,6 +121,27 @@ export function CommandPalette() {
         <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
           No results found.
         </Command.Empty>
+
+        {session && personSearch.trim().length >= 2 && people.length > 0 && (
+          <Command.Group heading="People to follow">
+            {people.map((person) => (
+              <Command.Item key={person.user_id} onSelect={() => toggleFollow(person)}>
+                {person.avatar_url ? (
+                  <img src={person.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                ) : (
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                    {(person.display_name ?? person.username ?? "U").slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="block truncate">{person.display_name ?? person.username}</span>
+                  <span className="block truncate text-xs text-muted-foreground">@{person.username ?? "user"}</span>
+                </span>
+                <span className="text-xs font-medium text-primary">{person.is_following ? "Following" : "Follow"}</span>
+              </Command.Item>
+            ))}
+          </Command.Group>
+        )}
 
         <Command.Group heading="Navigate">
           <Command.Item onSelect={() => go("/")}>
@@ -116,9 +166,6 @@ export function CommandPalette() {
               </Command.Item>
               <Command.Item onSelect={() => go("/reviews")}>
                 <GitPullRequest className="h-4 w-4 text-muted-foreground" /> Review Labs
-              </Command.Item>
-              <Command.Item onSelect={() => go("/challenges")}>
-                <Bug className="h-4 w-4 text-muted-foreground" /> Daily Bug
               </Command.Item>
               <Command.Item onSelect={() => go("/leaderboard")}>
                 <Trophy className="h-4 w-4 text-muted-foreground" /> Leaderboard
