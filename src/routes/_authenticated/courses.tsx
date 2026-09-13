@@ -123,7 +123,7 @@ function CoursesPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {courses.map((course) => (
+            {courses.filter((course) => enrollments[course.id] !== "accepted").map((course) => (
               <article key={course.id} className="bento-card flex flex-col gap-5 p-6">
                 <div>
                   <span className="text-xs text-primary">{course.level}</span>
