@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -62,7 +62,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
     queryFn: async () => {
       const { data, error } = await supabase
         .from("notifications")
-        .select("id, kind, title, body, href, read_at, created_at")
+        .select("id, kind, title, body, href, read_at, created_at, email_sent_at")
         .eq("recipient_id", userId!)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -72,6 +72,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
   });
   const unreadNotificationCount = notifications.filter((notification) => !notification.read_at).length;
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationBaseline = useRef<string | null>(null);
 
   const markNotificationRead = async (id: string, href?: string | null) => {
     await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
@@ -84,6 +85,18 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
     const response = await fetch("/api/notifications/email", { method: "POST", headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}`, "Content-Type": "application/json" }, body: JSON.stringify({ notificationId: id }) });
     if (!response.ok) throw new Error("Email could not be sent");
   };
+
+  useEffect(() => {
+    if (!userId || !notifications.length) return;
+    const newestId = notifications[0]?.id;
+    if (!notificationBaseline.current) {
+      notificationBaseline.current = newestId;
+      return;
+    }
+    const unseen = notifications.filter((notification) => notification.id !== notificationBaseline.current && !notification.read_at);
+    notificationBaseline.current = newestId;
+    for (const notification of unseen) void emailNotification(notification.id);
+  }, [notifications, userId]);
 
   const teacherItems = ["teacher", "developer"].includes(
     (profile as { role?: string } | undefined)?.role ?? "",
