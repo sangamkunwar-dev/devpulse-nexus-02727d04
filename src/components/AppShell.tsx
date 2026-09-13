@@ -251,7 +251,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
             </button>
           </div>
         </header>
-        <main className="flex-1 px-4 py-6 lg:px-8">{children}</main>
+        <main className="min-w-0 flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:px-8">{children}</main>
         <footer className="border-t border-border px-4 py-5 text-center text-xs text-muted-foreground lg:px-8">
           Made by <span className="font-medium text-foreground">Sangam Kunwar</span>
         </footer>

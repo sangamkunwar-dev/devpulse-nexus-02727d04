@@ -74,6 +74,15 @@ function CoursesPage() {
     return () => { if (channel) void supabase.removeChannel(channel); };
   }, []);
 
+  const removeEnrollment = async (courseId: string) => {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return toast.error("Please sign in before changing enrollment.");
+    const { error } = await (supabase as any).from("course_enrollments").delete().eq("course_id", courseId).eq("student_id", user.user.id);
+    if (error) return toast.error("Could not remove your request.");
+    setEnrollments((items) => { const next = { ...items }; delete next[courseId]; return next; });
+    toast.success("Enrollment removed. You can join again anytime.");
+  };
+
   const enroll = async (courseId: string) => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return toast.error("Please sign in before joining a course.");
@@ -91,7 +100,7 @@ function CoursesPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-background px-4 py-6 text-foreground sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex flex-col items-stretch justify-between gap-5 sm:mb-10 sm:flex-row sm:items-start sm:gap-4">
+        <div className="mb-8 flex flex-col items-stretch justify-between gap-4 sm:mb-10 sm:flex-row sm:items-start sm:gap-4">
           <div>
             <p className="mb-2 text-sm text-primary">FREE LEARNING</p>
             <h1 className="font-display text-4xl font-semibold">Learn from the community.</h1>
@@ -154,19 +163,13 @@ function CoursesPage() {
                       Continue course
                     </Button>
                   </Link>
+                ) : enrollments[course.id] === "pending" ? (
+                  <Button variant="outline" className="w-full" onClick={() => void removeEnrollment(course.id)}>
+                    <CheckCircle2 data-icon="inline-start" /> Request pending · Cancel
+                  </Button>
                 ) : (
-                  <Button
-                    onClick={() => void enroll(course.id)}
-                    disabled={Boolean(enrollments[course.id])}
-                  >
-                    {enrollments[course.id] ? (
-                      <>
-                        <CheckCircle2 data-icon="inline-start" />
-                        {enrollments[course.id] === "pending" ? "Request pending" : "Request declined"}
-                      </>
-                    ) : (
-                      "Join course"
-                    )}
+                  <Button className="w-full" onClick={() => void enroll(course.id)}>
+                    {enrollments[course.id] === "rejected" ? "Request again" : "Join course"}
                   </Button>
                 )}
               </article>

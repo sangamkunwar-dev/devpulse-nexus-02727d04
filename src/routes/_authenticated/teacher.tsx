@@ -204,10 +204,19 @@ function TeacherDashboard() {
   };
 
   const updateEnrollment = async (enrollment: Enrollment, status: "accepted" | "rejected") => {
+    if (status === "rejected") return removeStudent(enrollment);
     const { error } = await (supabase as any).from("course_enrollments").update({ status }).eq("id", enrollment.id);
     if (error) return toast.error("Could not update enrollment.");
     setEnrollments((items) => items.map((item) => item.id === enrollment.id ? { ...item, status } : item));
-    toast.success(status === "accepted" ? "Student accepted." : "Enrollment declined.");
+    toast.success("Student accepted.");
+  };
+
+  const removeStudent = async (enrollment: Enrollment) => {
+    if (!window.confirm(`Remove ${enrollment.student?.display_name ?? enrollment.student?.username ?? "this student"} from the course?`)) return;
+    const { error } = await (supabase as any).from("course_enrollments").delete().eq("id", enrollment.id).eq("course_id", enrollment.course_id);
+    if (error) return toast.error("Could not remove student.");
+    setEnrollments((items) => items.filter((item) => item.id !== enrollment.id));
+    toast.success("Student removed from the course.");
   };
 
   const deleteCourse = async (course: Course) => {
@@ -324,7 +333,7 @@ function TeacherDashboard() {
                         {course.description || "No description yet"}
                       </p>
                     </div>
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
                       <Link to="/teacher/courses/$courseId" params={{ courseId: course.id }}>
                         <Button variant="outline" size="sm">Manage course</Button>
                       </Link>
