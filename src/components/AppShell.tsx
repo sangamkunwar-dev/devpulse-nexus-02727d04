@@ -33,7 +33,6 @@ const NAV = [
   { to: "/reviews", label: "Review Labs", icon: GitPullRequest },
   { to: "/history", label: "My History", icon: History },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 const ADMIN_ITEMS = [
@@ -59,7 +58,9 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
   )
     ? [{ to: "/teacher", label: "Teacher Studio", icon: GraduationCap }]
     : [];
-  const nav = isAdmin ? [...NAV, ...teacherItems, ...ADMIN_ITEMS] : [...NAV, ...teacherItems];
+  const nav = isAdmin
+    ? [...NAV, ...teacherItems, ...ADMIN_ITEMS, { to: "/settings", label: "Settings", icon: Settings }]
+    : [...NAV, ...teacherItems, { to: "/settings", label: "Settings", icon: Settings }];
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
