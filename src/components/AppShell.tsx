@@ -85,7 +85,10 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
   const emailNotification = async (id: string) => {
     const { data } = await supabase.auth.getSession();
     const response = await fetch("/api/notifications/email", { method: "POST", headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}`, "Content-Type": "application/json" }, body: JSON.stringify({ notificationId: id }) });
-    if (!response.ok) throw new Error("Email could not be sent");
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      throw new Error(result?.error ?? result?.reason ?? "Email could not be sent");
+    }
   };
 
   useEffect(() => {
@@ -96,8 +99,13 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
     if (seenNotificationIds.current.size > notifications.length + 20) {
       seenNotificationIds.current = new Set(notifications.map((notification) => notification.id));
     }
-    if (unseen.length && seenNotificationIds.current.size > unseen.length) {
-      for (const notification of unseen) void emailNotification(notification.id);
+    if (unseen.length) {
+      for (const notification of unseen) {
+        void emailNotification(notification.id).catch((error) => {
+          console.error("[v0] Automatic notification email failed", error);
+          toast.error("Notification email could not be sent. Check your Resend sender domain.");
+        });
+      }
     }
   }, [notifications, userId]);
 

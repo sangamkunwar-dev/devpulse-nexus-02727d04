@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/notifications/email")({
         if (!body?.notificationId) return Response.json({ error: "notificationId is required" }, { status: 400 });
         const { data: notification } = await supabaseAdmin.from("notifications").select("id,recipient_id,kind,title,body,href").eq("id", body.notificationId).eq("recipient_id", authData.user.id).maybeSingle();
         if (!notification) return Response.json({ error: "Notification not found" }, { status: 404 });
-        const result = await sendNotificationEmail(notification);
+        const result = await sendNotificationEmail({ ...notification, notificationId: notification.id });
         return Response.json(result, { status: result.ok || result.skipped ? 200 : 502 });
       },
     },
