@@ -29,6 +29,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSnippetsRouteImport } from './routes/_authenticated/snippets'
+import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as AuthenticatedTeacherRouteImport } from './routes/_authenticated/teacher'
 import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as AuthenticatedCoursesCourseIdRouteImport } from './routes/_authenticated/courses.$courseId'
@@ -144,6 +145,11 @@ const AuthenticatedSnippetsRoute = AuthenticatedSnippetsRouteImport.update({
   path: '/snippets',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTeacherRoute = AuthenticatedTeacherRouteImport.update({
   id: '/teacher',
   path: '/teacher',
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AuthenticatedProjectsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/snippets': typeof AuthenticatedSnippetsRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByTo {
   '/projects': typeof AuthenticatedProjectsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/snippets': typeof AuthenticatedSnippetsRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/snippets': typeof AuthenticatedSnippetsRoute
+  '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
   '/_authenticated/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
@@ -347,6 +356,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/settings'
     | '/snippets'
+    | '/support'
     | '/teacher'
     | '/u/$username'
     | '/courses/$courseId'
@@ -382,6 +392,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/settings'
     | '/snippets'
+    | '/support'
     | '/teacher'
     | '/u/$username'
     | '/courses/$courseId'
@@ -418,6 +429,7 @@ export interface FileRouteTypes {
     | '/_authenticated/projects'
     | '/_authenticated/settings'
     | '/_authenticated/snippets'
+    | '/_authenticated/support'
     | '/_authenticated/teacher'
     | '/u/$username'
     | '/_authenticated/courses/$courseId'
@@ -596,6 +608,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSnippetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/support': {
+      id: '/_authenticated/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AuthenticatedSupportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/teacher': {
       id: '/_authenticated/teacher'
       path: '/teacher'
@@ -733,6 +752,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSnippetsRoute: typeof AuthenticatedSnippetsRoute
+  AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTeacherRoute: typeof AuthenticatedTeacherRouteWithChildren
   AuthenticatedReviewsIdRoute: typeof AuthenticatedReviewsIdRoute
   AuthenticatedReviewsIndexRoute: typeof AuthenticatedReviewsIndexRoute
@@ -751,6 +771,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSnippetsRoute: AuthenticatedSnippetsRoute,
+  AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTeacherRoute: AuthenticatedTeacherRouteWithChildren,
   AuthenticatedReviewsIdRoute: AuthenticatedReviewsIdRoute,
   AuthenticatedReviewsIndexRoute: AuthenticatedReviewsIndexRoute,

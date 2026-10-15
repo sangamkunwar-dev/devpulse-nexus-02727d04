@@ -174,6 +174,11 @@ function DashboardPage() {
           )}
         </motion.section>
 
+        <Link to="/support" className="mt-4 flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 transition hover:border-primary/40 hover:bg-primary/10">
+          <span className="flex items-center gap-3"><MessageCircle className="h-4 w-4 text-primary" /><span><span className="block text-sm font-medium">Need help?</span><span className="block text-xs text-muted-foreground">Send a support message and track your ticket.</span></span></span>
+          <ArrowRight className="h-4 w-4 text-primary" />
+        </Link>
+
         <div className="mt-6 grid gap-4 md:grid-cols-6">
           {/* XP card */}
           <motion.div

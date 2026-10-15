@@ -20,6 +20,7 @@ import {
   ScrollText,
   GraduationCap,
   Bell,
+  LifeBuoy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useProfile } from "@/hooks/useSession";
@@ -35,6 +36,7 @@ const NAV = [
   { to: "/reviews", label: "Review Labs", icon: GitPullRequest },
   { to: "/history", label: "My History", icon: History },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { to: "/support", label: "Support", icon: LifeBuoy },
 ];
 
 const ADMIN_ITEMS = [
