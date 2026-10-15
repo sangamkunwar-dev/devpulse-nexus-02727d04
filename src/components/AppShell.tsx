@@ -27,6 +27,16 @@ import { useSession, useProfile } from "@/hooks/useSession";
 import { levelFromXp } from "@/lib/levels";
 import { cn } from "@/lib/utils";
 
+type NotificationRow = {
+  id: string;
+  kind: string;
+  title: string;
+  body: string;
+  href: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/courses", label: "Courses", icon: GraduationCap },
@@ -36,7 +46,6 @@ const NAV = [
   { to: "/reviews", label: "Review Labs", icon: GitPullRequest },
   { to: "/history", label: "My History", icon: History },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { to: "/support", label: "Support", icon: LifeBuoy },
 ];
 
 const ADMIN_ITEMS = [
@@ -62,7 +71,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
     enabled: !!userId,
     refetchInterval: 8000,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("notifications")
         .select("id, kind, title, body, href, read_at, created_at")
         .eq("recipient_id", userId!)
@@ -72,14 +81,14 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
       return data ?? [];
     },
   });
-  const notifications = notificationsQuery.data ?? [];
+  const notifications = (notificationsQuery.data ?? []) as NotificationRow[];
   const unreadNotificationCount = notifications.filter((notification) => !notification.read_at).length;
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const seenNotificationIds = useRef<Set<string>>(new Set());
   const notificationInitialized = useRef(false);
 
   const markNotificationRead = async (id: string, href?: string | null) => {
-    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
+    await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
     void queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
     if (href) navigate({ to: href as never });
   };
@@ -285,8 +294,12 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
           </div>
         </header>
         <main className="min-w-0 flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:px-8">{children}</main>
-        <footer className="border-t border-border px-4 py-5 text-center text-xs text-muted-foreground lg:px-8">
-          Made by <span className="font-medium text-foreground">Sangam Kunwar</span>
+        <footer className="flex flex-col items-center justify-center gap-2 border-t border-border px-4 py-5 text-center text-xs text-muted-foreground sm:flex-row sm:gap-4 lg:px-8">
+          <span>Made by <span className="font-medium text-foreground">Sangam Kunwar</span></span>
+          <span aria-hidden="true" className="hidden text-border sm:inline">•</span>
+          <Link to="/support" className="inline-flex items-center gap-1.5 font-medium text-primary transition-colors hover:text-primary/80">
+            <LifeBuoy className="h-3.5 w-3.5" /> Support center
+          </Link>
         </footer>
       </div>
     </div>
