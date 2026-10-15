@@ -1,6 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Users, GitPullRequest, NotebookPen, Code2, FolderKanban } from "lucide-react";
+import { Shield, Users, GitPullRequest, NotebookPen, Code2, FolderKanban, Ticket, Clock3, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -21,9 +21,41 @@ function useIsAdmin(userId: string | null) {
   });
 }
 
+type SupportTicket = {
+  id: string;
+  token: string;
+  subject: string;
+  message: string;
+  status: "pending" | "in_progress" | "resolved";
+  created_at: string;
+  user_id: string;
+  profile?: { display_name: string | null; username: string | null } | null;
+};
+
+function useSupportTickets(enabled: boolean) {
+  return useQuery({
+    queryKey: ["admin-support-tickets"],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("support_tickets" as never)
+        .select("id, token, subject, message, status, created_at, user_id, profiles(display_name, username)")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return (data ?? []) as unknown as SupportTicket[];
+    },
+  });
+}
+
 function AdminPage() {
   const { userId, loading } = useSession();
   const { data: isAdmin, isLoading: checkingRole } = useIsAdmin(userId);
+  const tickets = useSupportTickets(!!isAdmin);
+  const updateTicket = async (id: string, status: SupportTicket["status"]) => {
+    await (supabase.from("support_tickets" as never) as any).update({ status }).eq("id", id);
+    await tickets.refetch();
+  };
 
   const stats = useQuery({
     queryKey: ["admin-stats"],
@@ -90,6 +122,37 @@ function AdminPage() {
               <div className="text-xs text-muted-foreground">{card.label}</div>
             </div>
           ))}
+        </div>
+
+        <div className="bento-card p-5">
+          <div className="flex items-center gap-2">
+            <Ticket className="h-5 w-5 text-primary" />
+            <div>
+              <h3 className="font-display text-lg font-semibold">Support tickets</h3>
+              <p className="mt-1 text-xs text-muted-foreground">Review every user message, token, and contact profile.</p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-col gap-3">
+            {tickets.isLoading && <Skeleton className="h-24 w-full" />}
+            {tickets.isError && <p className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">Support tickets are not available yet. Apply the SQL setup provided with this update.</p>}
+            {!tickets.isLoading && !tickets.isError && !tickets.data?.length && <p className="text-sm text-muted-foreground">No support tickets have been submitted.</p>}
+            {tickets.data?.map((ticket) => (
+              <article key={ticket.id} className="rounded-xl border border-border p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-primary">{ticket.token}</span><Badge variant={ticket.status === "resolved" ? "secondary" : "outline"}>{ticket.status.replace("_", " ")}</Badge></div>
+                    <h4 className="mt-2 font-medium">{ticket.subject}</h4>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{ticket.message}</p>
+                    <p className="mt-3 text-xs text-muted-foreground">From {ticket.profile?.display_name || ticket.profile?.username || ticket.user_id} · {new Date(ticket.created_at).toLocaleString()}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-muted" onClick={() => updateTicket(ticket.id, "in_progress")}><Clock3 className="h-3.5 w-3.5" />Working</button>
+                    <button className="inline-flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground hover:bg-primary/90" onClick={() => updateTicket(ticket.id, "resolved")}><CheckCircle2 className="h-3.5 w-3.5" />Resolve</button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
 
         <div className="bento-card p-5">

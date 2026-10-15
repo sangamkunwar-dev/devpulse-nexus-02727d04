@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Clock3, LifeBuoy, Plus, ShieldCheck, Ticket, XCircle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -29,18 +31,30 @@ function SupportPage() {
   const { data: profile } = useProfile(userId);
   const [tickets, setTickets] = useState(seedTickets);
   const [subject, setSubject] = useState("");
+  const remoteTickets = useQuery({
+    queryKey: ["support-tickets", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("support_tickets" as never).select("id, token, subject, message, status, created_at").eq("user_id", userId!).order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState<string | null>(null);
   const isAdmin = profile?.role === "admin";
-  const openCount = useMemo(() => tickets.filter((ticket) => ticket.status !== "Resolved").length, [tickets]);
+  const displayTickets: TicketItem[] = remoteTickets.data?.map((ticket) => ({ id: ticket.token, subject: ticket.subject, message: ticket.message, status: ticket.status === "resolved" ? "Resolved" : ticket.status === "in_progress" ? "In progress" : "Pending", createdAt: new Date(ticket.created_at).toLocaleDateString() })) ?? tickets;
+  const openCount = useMemo(() => displayTickets.filter((ticket) => ticket.status !== "Resolved").length, [displayTickets]);
 
-  const createTicket = () => {
-    if (!subject.trim() || !message.trim()) return;
-    const id = `DP-${Math.floor(1000 + Math.random() * 9000)}`;
-    setTickets((current) => [{ id, subject: subject.trim(), message: message.trim(), status: "Pending", createdAt: "Just now" }, ...current]);
-    setSubmitted(id);
+  const createTicket = async () => {
+    if (!subject.trim() || !message.trim() || !userId) return;
+    const token = `DP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+    const { error } = await (supabase.from("support_tickets" as never) as any).insert({ user_id: userId, token, subject: subject.trim(), message: message.trim() });
+    if (error) return;
+    setSubmitted(token);
     setSubject("");
     setMessage("");
+    await remoteTickets.refetch();
   };
 
   return (
@@ -67,12 +81,12 @@ function SupportPage() {
           <Card>
             <CardHeader><CardTitle>Your tickets</CardTitle><CardDescription>Track pending, active, and resolved requests.</CardDescription></CardHeader>
             <CardContent className="flex flex-col gap-3">
-              {tickets.map((ticket) => <article key={ticket.id} className="rounded-xl border border-border/70 p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-mono text-xs text-primary">{ticket.id} · {ticket.createdAt}</p><h3 className="mt-1 truncate font-medium">{ticket.subject}</h3></div><Badge variant={ticket.status === "Resolved" ? "secondary" : "outline"} className="shrink-0 gap-1">{statusIcon(ticket.status)}{ticket.status}</Badge></div><p className="mt-2 text-sm text-muted-foreground">{ticket.message}</p></article>)}
+              {displayTickets.map((ticket) => <article key={ticket.id} className="rounded-xl border border-border/70 p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-mono text-xs text-primary">{ticket.id} · {ticket.createdAt}</p><h3 className="mt-1 truncate font-medium">{ticket.subject}</h3></div><Badge variant={ticket.status === "Resolved" ? "secondary" : "outline"} className="shrink-0 gap-1">{statusIcon(ticket.status)}{ticket.status}</Badge></div><p className="mt-2 text-sm text-muted-foreground">{ticket.message}</p></article>)}
             </CardContent>
           </Card>
         </div>
 
-        {isAdmin && <Card className="border-primary/20"><CardHeader><div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /><div><CardTitle>Admin support queue</CardTitle><CardDescription>Review submitted ticket details and update their status.</CardDescription></div></div></CardHeader><CardContent className="flex flex-col gap-3">{tickets.map((ticket) => <div key={ticket.id} className="flex flex-col gap-3 rounded-xl border border-border/70 p-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="font-mono text-xs text-primary">{ticket.id}</p><p className="mt-1 font-medium">{ticket.subject}</p><p className="mt-1 text-sm text-muted-foreground">{ticket.message}</p></div><div className="flex shrink-0 gap-2"><Button size="sm" variant="outline" onClick={() => setTickets((current) => current.map((item) => item.id === ticket.id ? { ...item, status: "In progress" } : item))}><Clock3 data-icon="inline-start" />In progress</Button><Button size="sm" variant="secondary" onClick={() => setTickets((current) => current.map((item) => item.id === ticket.id ? { ...item, status: "Resolved" } : item))}><CheckCircle2 data-icon="inline-start" />Resolve</Button></div></div>)}</CardContent></Card>}
+        {isAdmin && <Card className="border-primary/20"><CardHeader><div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /><div><CardTitle>Admin support queue</CardTitle><CardDescription>Review submitted ticket details and update their status.</CardDescription></div></div></CardHeader><CardContent className="flex flex-col gap-3">{displayTickets.map((ticket) => <div key={ticket.id} className="flex flex-col gap-3 rounded-xl border border-border/70 p-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="font-mono text-xs text-primary">{ticket.id}</p><p className="mt-1 font-medium">{ticket.subject}</p><p className="mt-1 text-sm text-muted-foreground">{ticket.message}</p></div><div className="flex shrink-0 gap-2"><Button size="sm" variant="outline" onClick={() => setTickets((current) => current.map((item) => item.id === ticket.id ? { ...item, status: "In progress" } : item))}><Clock3 data-icon="inline-start" />In progress</Button><Button size="sm" variant="secondary" onClick={() => setTickets((current) => current.map((item) => item.id === ticket.id ? { ...item, status: "Resolved" } : item))}><CheckCircle2 data-icon="inline-start" />Resolve</Button></div></div>)}</CardContent></Card>}
 
         <p className="flex items-center gap-2 text-xs text-muted-foreground"><XCircle className="h-3.5 w-3.5" />This preview stores tickets in the current session. Connect Supabase later to share tickets between users and admins.</p>
       </div>
