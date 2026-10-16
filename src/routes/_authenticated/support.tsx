@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Clock3, LifeBuoy, Plus, Ticket } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ function SupportPage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const remoteTickets = useQuery({
     queryKey: ["support-tickets", userId],
     enabled: !!userId,
@@ -51,14 +53,47 @@ function SupportPage() {
   const openCount = useMemo(() => displayTickets.filter((ticket) => ticket.status !== "Resolved").length, [displayTickets]);
 
   const createTicket = async () => {
-    if (!subject.trim() || !message.trim() || !userId) return;
-    const token = `DP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-    const { error } = await (supabase.from("support_tickets" as never) as any).insert({ user_id: userId, token, subject: subject.trim(), message: message.trim() });
-    if (error) return;
-    setSubmitted(token);
-    setSubject("");
-    setMessage("");
-    await remoteTickets.refetch();
+    const trimmedSubject = subject.trim();
+    const trimmedMessage = message.trim();
+
+    if (!trimmedSubject || !trimmedMessage) {
+      toast.error("Add a subject and message before creating a ticket.");
+      return;
+    }
+
+    if (!userId) {
+      toast.error("Your session has expired. Please sign in again.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const token = `DP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+      const { error } = await (supabase.from("support_tickets" as never) as any).insert({
+        user_id: userId,
+        token,
+        subject: trimmedSubject,
+        message: trimmedMessage,
+        status: "pending",
+      });
+
+      if (error) {
+        console.error("[v0] Support ticket creation failed:", error);
+        toast.error("Ticket could not be created. Please try again.");
+        return;
+      }
+
+      setSubmitted(token);
+      setSubject("");
+      setMessage("");
+      toast.success("Support ticket created.");
+      await remoteTickets.refetch();
+    } catch (error) {
+      console.error("[v0] Unexpected support ticket error:", error);
+      toast.error("Ticket could not be created. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -77,7 +112,10 @@ function SupportPage() {
             <CardContent className="flex flex-col gap-4">
               <label className="flex flex-col gap-2 text-sm font-medium" htmlFor="support-subject">Subject<Input id="support-subject" value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="What do you need help with?" /></label>
               <label className="flex flex-col gap-2 text-sm font-medium" htmlFor="support-message">Message<Textarea id="support-message" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Tell us what happened..." className="min-h-32 resize-y" /></label>
-              <Button onClick={createTicket} disabled={!subject.trim() || !message.trim()}><Plus data-icon="inline-start" />Create support ticket</Button>
+              <Button onClick={createTicket} disabled={isSubmitting || !subject.trim() || !message.trim()}>
+                <Plus data-icon="inline-start" />
+                {isSubmitting ? "Creating ticket..." : "Create support ticket"}
+              </Button>
               {submitted && <div className="rounded-lg border border-primary/25 bg-primary/10 p-3 text-sm"><p className="font-medium text-primary">Ticket created successfully</p><p className="mt-1 text-muted-foreground">Your tracking token is <strong className="font-mono text-foreground">{submitted}</strong>. Keep it for follow-up.</p></div>}
             </CardContent>
           </Card>
