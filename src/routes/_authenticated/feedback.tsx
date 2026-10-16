@@ -35,10 +35,8 @@ function FeedbackPage() {
 
     setIsSubmitting(true);
     try {
-      const token = `FB-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       const { error } = await (supabase.from("support_tickets" as never) as any).insert({
         user_id: userId,
-        token,
         subject: `[Feedback] ${trimmedSubject}`,
         message: `Rating: ${rating}/5\n\n${trimmedMessage}`,
         status: "open",

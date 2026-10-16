@@ -24,7 +24,6 @@ function useIsAdmin(userId: string | null) {
 
 type SupportTicket = {
   id: string;
-  token: string;
   subject: string;
   message: string;
   status: "open" | "in_progress" | "resolved";
@@ -40,7 +39,7 @@ function useSupportTickets(enabled: boolean) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("support_tickets" as never)
-        .select("id, token, subject, message, status, created_at, user_id, profiles(display_name, username)")
+        .select("id, subject, message, status, created_at, user_id, profiles(display_name, username)")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -142,7 +141,7 @@ function AdminPage() {
             <Ticket className="h-5 w-5 text-primary" />
             <div>
               <h3 className="font-display text-lg font-semibold">Support tickets</h3>
-              <p className="mt-1 text-xs text-muted-foreground">Review every user message, token, and contact profile.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Review every user message and contact profile.</p>
             </div>
           </div>
           <div className="mt-4 flex flex-col gap-3">
@@ -153,7 +152,7 @@ function AdminPage() {
               <article key={ticket.id} className="rounded-xl border border-border p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-primary">{ticket.token}</span><Badge variant={ticket.status === "resolved" ? "secondary" : "outline"}>{ticket.status.replace("_", " ")}</Badge></div>
+                    <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-primary">{ticket.id}</span><Badge variant={ticket.status === "resolved" ? "secondary" : "outline"}>{ticket.status.replace("_", " ")}</Badge></div>
                     <h4 className="mt-2 font-medium">{ticket.subject}</h4>
                     <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{ticket.message}</p>
                     <p className="mt-3 text-xs text-muted-foreground">From {ticket.profile?.display_name || ticket.profile?.username || ticket.user_id} · {new Date(ticket.created_at).toLocaleString()}</p>

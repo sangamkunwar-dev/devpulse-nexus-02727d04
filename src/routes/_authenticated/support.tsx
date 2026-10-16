@@ -32,7 +32,7 @@ function SupportPage() {
     queryKey: ["support-tickets", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("support_tickets" as never).select("id, token, subject, message, status, created_at").eq("user_id", userId!).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("support_tickets" as never).select("id, subject, message, status, created_at").eq("user_id", userId!).order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -49,7 +49,7 @@ function SupportPage() {
     return () => { void supabase.removeChannel(channel); };
   }, [userId, remoteTickets.refetch]);
 
-  const displayTickets: TicketItem[] = (remoteTickets.data ?? []).map((ticket) => ({ id: ticket.token, subject: ticket.subject, message: ticket.message, status: ticket.status === "resolved" ? "Resolved" : ticket.status === "in_progress" ? "In progress" : "Pending", createdAt: new Date(ticket.created_at).toLocaleDateString() }));
+  const displayTickets: TicketItem[] = (remoteTickets.data ?? []).map((ticket) => ({ id: ticket.id, subject: ticket.subject, message: ticket.message, status: ticket.status === "resolved" ? "Resolved" : ticket.status === "in_progress" ? "In progress" : "Pending", createdAt: new Date(ticket.created_at).toLocaleDateString() }));
   const openCount = useMemo(() => displayTickets.filter((ticket) => ticket.status !== "Resolved").length, [displayTickets]);
 
   const createTicket = async () => {
@@ -68,21 +68,19 @@ function SupportPage() {
 
     setIsSubmitting(true);
     try {
-      const token = `DP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-      const { error } = await (supabase.from("support_tickets" as never) as any).insert({
+      const { data, error } = await (supabase.from("support_tickets" as never) as any).insert({
         user_id: userId,
-        token,
         subject: trimmedSubject,
         message: trimmedMessage,
         status: "open",
-      });
+      }).select("id").single();
 
       if (error) {
         toast.error("Ticket could not be created. Please try again.");
         return;
       }
 
-      setSubmitted(token);
+      setSubmitted(data.id);
       setSubject("");
       setMessage("");
       toast.success("Support ticket created.");
@@ -114,7 +112,7 @@ function SupportPage() {
                 <Plus data-icon="inline-start" />
                 {isSubmitting ? "Creating ticket..." : "Create support ticket"}
               </Button>
-              {submitted && <div className="rounded-lg border border-primary/25 bg-primary/10 p-3 text-sm"><p className="font-medium text-primary">Ticket created successfully</p><p className="mt-1 text-muted-foreground">Your tracking token is <strong className="font-mono text-foreground">{submitted}</strong>. Keep it for follow-up.</p></div>}
+              {submitted && <div className="rounded-lg border border-primary/25 bg-primary/10 p-3 text-sm"><p className="font-medium text-primary">Ticket created successfully</p><p className="mt-1 text-muted-foreground">Your request ID is <strong className="font-mono text-foreground">{submitted}</strong>. Keep it for follow-up.</p></div>}
             </CardContent>
           </Card>
 
