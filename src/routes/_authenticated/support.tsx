@@ -32,7 +32,7 @@ function SupportPage() {
     queryKey: ["support-tickets", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("support_tickets" as never).select("id, ticket_number, subject, message, status, created_at").eq("user_id", userId!).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("support_tickets" as never).select("id, token, subject, message, status, created_at").eq("user_id", userId!).order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -49,7 +49,7 @@ function SupportPage() {
     return () => { void supabase.removeChannel(channel); };
   }, [userId, remoteTickets.refetch]);
 
-  const displayTickets: TicketItem[] = (remoteTickets.data ?? []).map((ticket) => ({ id: ticket.ticket_number, subject: ticket.subject, message: ticket.message, status: ticket.status === "resolved" ? "Resolved" : ticket.status === "in_progress" ? "In progress" : "Pending", createdAt: new Date(ticket.created_at).toLocaleDateString() }));
+  const displayTickets: TicketItem[] = (remoteTickets.data ?? []).map((ticket) => ({ id: ticket.token, subject: ticket.subject, message: ticket.message, status: ticket.status === "resolved" ? "Resolved" : ticket.status === "in_progress" ? "In progress" : "Pending", createdAt: new Date(ticket.created_at).toLocaleDateString() }));
   const openCount = useMemo(() => displayTickets.filter((ticket) => ticket.status !== "Resolved").length, [displayTickets]);
 
   const createTicket = async () => {
