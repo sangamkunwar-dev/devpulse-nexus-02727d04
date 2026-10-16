@@ -114,7 +114,6 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
       for (const notification of unseen) {
         void emailNotification(notification.id).catch((error) => {
           console.error("[v0] Automatic notification email failed", error);
-          toast.error("Notification email could not be sent. Check your Resend sender domain.");
         });
       }
     }
@@ -266,7 +265,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
                     {notificationsQuery.isError ? <p className="px-4 py-8 text-center text-sm text-destructive">Notifications could not load. Please refresh and try again.</p> : notifications.length === 0 ? <p className="px-4 py-8 text-center text-sm text-muted-foreground">You&apos;re all caught up.</p> : notifications.map((notification) => (
                       <div key={notification.id} className={cn("border-b border-border px-4 py-3 transition hover:bg-muted", !notification.read_at && "bg-primary/5")}><button type="button" onClick={() => void markNotificationRead(notification.id, notification.href)} className="block w-full text-left">
                         <div className="flex items-start gap-2"><span className={cn("mt-1 h-2 w-2 shrink-0 rounded-full", notification.read_at ? "bg-muted" : "bg-primary")} /><div className="min-w-0"><p className="text-sm font-medium">{notification.title}</p><p className="mt-0.5 text-xs text-muted-foreground">{notification.body}</p><p className="mt-1 text-[10px] text-muted-foreground">{new Date(notification.created_at).toLocaleString()}</p></div></div>
-                      </button><button type="button" onClick={() => void emailNotification(notification.id).then(() => toast.success("Notification email sent.")).catch(() => toast.error("Email could not be sent."))} className="mt-2 text-[11px] font-medium text-primary hover:underline">Send to email</button></div>
+                      </button></div>
                     ))}
                   </div>
                 </div>
