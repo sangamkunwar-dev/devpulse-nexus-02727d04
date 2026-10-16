@@ -71,7 +71,7 @@ function SupportPage() {
       const token = `DP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       const { error } = await (supabase.from("support_tickets" as never) as any).insert({
         user_id: userId,
-        ticket_number: token,
+        token,
         subject: trimmedSubject,
         message: trimmedMessage,
         status: "open",
