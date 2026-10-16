@@ -21,6 +21,7 @@ import {
   GraduationCap,
   Bell,
   LifeBuoy,
+  MessageSquareHeart,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useProfile } from "@/hooks/useSession";
@@ -46,6 +47,7 @@ const NAV = [
   { to: "/reviews", label: "Review Labs", icon: GitPullRequest },
   { to: "/history", label: "My History", icon: History },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { to: "/feedback", label: "Feedback", icon: MessageSquareHeart },
 ];
 
 const ADMIN_ITEMS = [
