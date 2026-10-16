@@ -27,7 +27,7 @@ type SupportTicket = {
   token: string;
   subject: string;
   message: string;
-  status: "pending" | "in_progress" | "resolved";
+  status: "open" | "in_progress" | "resolved";
   created_at: string;
   user_id: string;
   profile?: { display_name: string | null; username: string | null } | null;

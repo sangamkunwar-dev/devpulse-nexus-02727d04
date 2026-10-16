@@ -74,7 +74,7 @@ function SupportPage() {
         ticket_number: token,
         subject: trimmedSubject,
         message: trimmedMessage,
-        status: "pending",
+        status: "open",
       });
 
       if (error) {
