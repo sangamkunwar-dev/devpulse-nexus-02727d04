@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Shield, Users, GitPullRequest, NotebookPen, Code2, FolderKanban, Ticket, Clock3, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
@@ -52,9 +53,21 @@ function AdminPage() {
   const { userId, loading } = useSession();
   const { data: isAdmin, isLoading: checkingRole } = useIsAdmin(userId);
   const tickets = useSupportTickets(!!isAdmin);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const channel = supabase
+      .channel("admin-support-tickets")
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, () => {
+        void tickets.refetch();
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [isAdmin, tickets.refetch]);
+
   const updateTicket = async (id: string, status: SupportTicket["status"]) => {
-    await (supabase.from("support_tickets" as never) as any).update({ status }).eq("id", id);
-    await tickets.refetch();
+    const { error } = await (supabase.from("support_tickets" as never) as any).update({ status }).eq("id", id);
+    if (!error) await tickets.refetch();
   };
 
   const stats = useQuery({
