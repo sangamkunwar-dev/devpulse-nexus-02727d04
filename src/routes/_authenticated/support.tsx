@@ -78,8 +78,18 @@ function SupportPage() {
       });
 
       if (error) {
-        console.error("[v0] Support ticket creation failed:", error);
-        toast.error("Ticket could not be created. Please try again.");
+        console.error("[v0] Support ticket creation failed:", {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+        const reason = error.code === "42P01"
+          ? "The support_tickets table has not been created yet."
+          : error.code === "42501"
+            ? "Supabase blocked this request. Check the support_tickets RLS policies."
+            : error.message || "Supabase rejected the ticket.";
+        toast.error(`Ticket could not be created: ${reason}`);
         return;
       }
 
