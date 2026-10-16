@@ -112,9 +112,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
     }
     if (unseen.length) {
       for (const notification of unseen) {
-        void emailNotification(notification.id).catch((error) => {
-          console.error("[v0] Automatic notification email failed", error);
-        });
+  void emailNotification(notification.id).catch(() => undefined);
       }
     }
   }, [notifications, userId]);

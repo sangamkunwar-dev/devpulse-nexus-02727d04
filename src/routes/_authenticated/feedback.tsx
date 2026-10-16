@@ -45,19 +45,18 @@ function FeedbackPage() {
       });
 
       if (error) {
-        console.error("[v0] Feedback submission failed:", error);
-        toast.error(error.code === "42501" ? "Feedback is blocked by the database policy. Please contact an admin." : "Feedback could not be sent. Please try again.");
+        toast.error("Feedback could not be sent. Please try again.");
       } else {
         setSubmitted(true);
         setSubject("");
         setMessage("");
         toast.success("Thanks for helping improve DevPulse.");
       }
-    } catch (error) {
-      console.error("[v0] Unexpected feedback submission error:", error);
+    } catch {
       toast.error("Feedback could not be sent. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (

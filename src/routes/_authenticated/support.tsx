@@ -78,18 +78,7 @@ function SupportPage() {
       });
 
       if (error) {
-        console.error("[v0] Support ticket creation failed:", {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-        });
-        const reason = error.code === "42P01"
-          ? "The support_tickets table has not been created yet."
-          : error.code === "42501"
-            ? "Supabase blocked this request. Check the support_tickets RLS policies."
-            : error.message || "Supabase rejected the ticket.";
-        toast.error(`Ticket could not be created: ${reason}`);
+        toast.error("Ticket could not be created. Please try again.");
         return;
       }
 
@@ -98,8 +87,7 @@ function SupportPage() {
       setMessage("");
       toast.success("Support ticket created.");
       await remoteTickets.refetch();
-    } catch (error) {
-      console.error("[v0] Unexpected support ticket error:", error);
+    } catch {
       toast.error("Ticket could not be created. Please try again.");
     } finally {
       setIsSubmitting(false);
