@@ -39,7 +39,7 @@ BEGIN
   SELECT value INTO _secret FROM public.app_config WHERE key = 'notify_secret';
   IF _secret IS NULL THEN RETURN; END IF;
   PERFORM net.http_post(
-    url := 'https://devpulse-nexus.lovable.app/api/public/notify',
+    url := 'https://dev-pulse.dev/api/public/notify',
     headers := jsonb_build_object('Content-Type', 'application/json', 'x-notify-secret', _secret),
     body := jsonb_build_object('kind', _kind, 'payload', _payload)
   );

@@ -86,7 +86,7 @@ make more features and make all at once and others
 
 This project was built with [Lovable](https://lovable.dev).
 
-**Live app**: https://devpulse-nexus.lovable.app
+**Live app**: https://dev-pulse.dev
 
 ## Build with Lovable
 

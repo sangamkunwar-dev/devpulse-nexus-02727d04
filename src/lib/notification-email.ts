@@ -19,7 +19,7 @@ export async function sendNotificationEmail(input: { recipientId: string; kind: 
   const resend = new Resend(apiKey);
   const senderDomain = process.env.RESEND_EMAIL_DOMAIN?.trim();
   const from = senderDomain ? `DevPulse <notifications@${senderDomain}>` : "DevPulse <onboarding@resend.dev>";
-  const appUrl = process.env.APP_URL ?? "https://devpulse-nexus.lovable.app";
+  const appUrl = process.env.APP_URL ?? "https://dev-pulse.dev";
   const actionUrl = input.href ? `${appUrl}${input.href}` : `${appUrl}/dashboard`;
   const name = profile?.display_name || profile?.username || "there";
   const result = await resend.emails.send({
