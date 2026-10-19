@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/teacher/file")({
           .eq("student_id", claims.claims.sub)
           .eq("status", "accepted")
           .maybeSingle();
-        const course = file.courses as { teacher_id: string; published: boolean };
+        const course = file.courses as unknown as { teacher_id: string; published: boolean };
         if (course.teacher_id !== claims.claims.sub && !course.published && !enrollment) return Response.json({ error: "Forbidden" }, { status: 403 });
         const result = await get(pathname, { access: "private" });
         if (!result) return new Response("Not found", { status: 404 });

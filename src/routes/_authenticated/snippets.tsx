@@ -99,7 +99,7 @@ function SnippetsPage() {
       !search.trim() ||
       s.title.toLowerCase().includes(search.toLowerCase()) ||
       s.language.includes(search.toLowerCase()) ||
-      s.tags.some((t) => t.toLowerCase().includes(search.toLowerCase())),
+      s.tags.some((t: string) => t.toLowerCase().includes(search.toLowerCase())),
   );
 
   return (
@@ -210,7 +210,7 @@ function SnippetsPage() {
               <CodeBlock code={s.code.split("\n").slice(0, 10).join("\n")} />
               <div className="mt-3 flex items-center justify-between">
                 <div className="flex flex-wrap gap-1.5">
-                  {s.tags.map((t) => (
+                  {s.tags.map((t: string) => (
                     <Badge key={t} variant="outline">{t}</Badge>
                   ))}
                 </div>

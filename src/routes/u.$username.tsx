@@ -224,7 +224,7 @@ function PortfolioPage() {
               Tech stack
             </h2>
             <div className="mt-3 flex flex-wrap gap-2">
-              {profile.tech_stack.map((t) => (
+              {profile.tech_stack.map((t: string) => (
                 <Badge key={t}>{t}</Badge>
               ))}
             </div>
@@ -297,7 +297,7 @@ function PortfolioPage() {
                     <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{p.description}</p>
                   )}
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    {p.tags.map((t) => (
+                    {p.tags.map((t: string) => (
                       <Badge key={t} variant="outline">{t}</Badge>
                     ))}
                   </div>

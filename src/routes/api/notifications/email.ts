@@ -12,7 +12,7 @@ export const Route = createFileRoute("/api/notifications/email")({
         if (authError || !authData.user) return Response.json({ error: "Unauthorized" }, { status: 401 });
         const body = await request.json().catch(() => null) as { notificationId?: string } | null;
         if (!body?.notificationId) return Response.json({ error: "notificationId is required" }, { status: 400 });
-        const { data: notification } = await supabaseAdmin.from("notifications").select("id,recipient_id,kind,title,body,href").eq("id", body.notificationId).eq("recipient_id", authData.user.id).maybeSingle();
+        const { data: notification } = await (supabaseAdmin as any).from("notifications").select("id,recipient_id,kind,title,body,href").eq("id", body.notificationId).eq("recipient_id", authData.user.id).maybeSingle();
         if (!notification) return Response.json({ error: "Notification not found" }, { status: 404 });
         const result = await sendNotificationEmail({ ...notification, notificationId: notification.id });
         return Response.json(result, { status: result.ok || result.skipped ? 200 : 502 });
