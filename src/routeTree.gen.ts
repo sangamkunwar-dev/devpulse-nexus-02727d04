@@ -21,7 +21,6 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticated/courses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
@@ -30,7 +29,6 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSnippetsRouteImport } from './routes/_authenticated/snippets'
-import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as AuthenticatedTeacherRouteImport } from './routes/_authenticated/teacher'
 import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as AuthenticatedCoursesCourseIdRouteImport } from './routes/_authenticated/courses.$courseId'
@@ -105,11 +103,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
-  id: '/feedback',
-  path: '/feedback',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -149,11 +142,6 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
 const AuthenticatedSnippetsRoute = AuthenticatedSnippetsRouteImport.update({
   id: '/snippets',
   path: '/snippets',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
-  id: '/support',
-  path: '/support',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTeacherRoute = AuthenticatedTeacherRouteImport.update({
@@ -242,7 +230,6 @@ export interface FileRoutesByFullPath {
   '/audit': typeof AuthenticatedAuditRoute
   '/courses': typeof AuthenticatedCoursesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/feedback': typeof AuthenticatedFeedbackRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -251,7 +238,6 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AuthenticatedProjectsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/snippets': typeof AuthenticatedSnippetsRoute
-  '/support': typeof AuthenticatedSupportRoute
   '/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
@@ -279,7 +265,6 @@ export interface FileRoutesByTo {
   '/audit': typeof AuthenticatedAuditRoute
   '/courses': typeof AuthenticatedCoursesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/feedback': typeof AuthenticatedFeedbackRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -288,7 +273,6 @@ export interface FileRoutesByTo {
   '/projects': typeof AuthenticatedProjectsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/snippets': typeof AuthenticatedSnippetsRoute
-  '/support': typeof AuthenticatedSupportRoute
   '/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
   '/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
@@ -318,7 +302,6 @@ export interface FileRoutesById {
   '/_authenticated/audit': typeof AuthenticatedAuditRoute
   '/_authenticated/courses': typeof AuthenticatedCoursesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/feedback': typeof AuthenticatedFeedbackRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
@@ -327,7 +310,6 @@ export interface FileRoutesById {
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/snippets': typeof AuthenticatedSnippetsRoute
-  '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
   '/_authenticated/courses/$courseId': typeof AuthenticatedCoursesCourseIdRoute
@@ -357,7 +339,6 @@ export interface FileRouteTypes {
     | '/audit'
     | '/courses'
     | '/dashboard'
-    | '/feedback'
     | '/history'
     | '/leaderboard'
     | '/messages'
@@ -366,7 +347,6 @@ export interface FileRouteTypes {
     | '/projects'
     | '/settings'
     | '/snippets'
-    | '/support'
     | '/teacher'
     | '/u/$username'
     | '/courses/$courseId'
@@ -394,7 +374,6 @@ export interface FileRouteTypes {
     | '/audit'
     | '/courses'
     | '/dashboard'
-    | '/feedback'
     | '/history'
     | '/leaderboard'
     | '/messages'
@@ -403,7 +382,6 @@ export interface FileRouteTypes {
     | '/projects'
     | '/settings'
     | '/snippets'
-    | '/support'
     | '/teacher'
     | '/u/$username'
     | '/courses/$courseId'
@@ -432,7 +410,6 @@ export interface FileRouteTypes {
     | '/_authenticated/audit'
     | '/_authenticated/courses'
     | '/_authenticated/dashboard'
-    | '/_authenticated/feedback'
     | '/_authenticated/history'
     | '/_authenticated/leaderboard'
     | '/_authenticated/messages'
@@ -441,7 +418,6 @@ export interface FileRouteTypes {
     | '/_authenticated/projects'
     | '/_authenticated/settings'
     | '/_authenticated/snippets'
-    | '/_authenticated/support'
     | '/_authenticated/teacher'
     | '/u/$username'
     | '/_authenticated/courses/$courseId'
@@ -564,13 +540,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/feedback': {
-      id: '/_authenticated/feedback'
-      path: '/feedback'
-      fullPath: '/feedback'
-      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/history': {
       id: '/_authenticated/history'
       path: '/history'
@@ -625,13 +594,6 @@ declare module '@tanstack/react-router' {
       path: '/snippets'
       fullPath: '/snippets'
       preLoaderRoute: typeof AuthenticatedSnippetsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/support': {
-      id: '/_authenticated/support'
-      path: '/support'
-      fullPath: '/support'
-      preLoaderRoute: typeof AuthenticatedSupportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/teacher': {
@@ -763,7 +725,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
   AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedFeedbackRoute: typeof AuthenticatedFeedbackRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
@@ -772,7 +733,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSnippetsRoute: typeof AuthenticatedSnippetsRoute
-  AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTeacherRoute: typeof AuthenticatedTeacherRouteWithChildren
   AuthenticatedReviewsIdRoute: typeof AuthenticatedReviewsIdRoute
   AuthenticatedReviewsIndexRoute: typeof AuthenticatedReviewsIndexRoute
@@ -783,7 +743,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAuditRoute: AuthenticatedAuditRoute,
   AuthenticatedCoursesRoute: AuthenticatedCoursesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedFeedbackRoute: AuthenticatedFeedbackRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
@@ -792,7 +751,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSnippetsRoute: AuthenticatedSnippetsRoute,
-  AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTeacherRoute: AuthenticatedTeacherRouteWithChildren,
   AuthenticatedReviewsIdRoute: AuthenticatedReviewsIdRoute,
   AuthenticatedReviewsIndexRoute: AuthenticatedReviewsIndexRoute,

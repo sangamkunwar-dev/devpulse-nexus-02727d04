@@ -73,7 +73,7 @@ function ProjectsPage() {
   };
 
   const togglePublic = async (id: string, current: boolean) => {
-    const { error } = await supabase.from("projects").update({ is_public: !current }).eq("id", id);
+    const { error } = await supabase.from("projects").update({ is_public: !current }).eq("id", id).eq("user_id", userId!);
     if (!error) {
       toast.success(!current ? "Project is now on your portfolio" : "Project is private");
       refresh();
@@ -81,7 +81,7 @@ function ProjectsPage() {
   };
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from("projects").delete().eq("id", id);
+    const { error } = await supabase.from("projects").delete().eq("id", id).eq("user_id", userId!);
     if (!error) {
       toast.success("Project deleted");
       refresh();

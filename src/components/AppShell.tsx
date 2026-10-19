@@ -20,7 +20,6 @@ import {
   ScrollText,
   GraduationCap,
   Bell,
-  LifeBuoy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useProfile } from "@/hooks/useSession";
@@ -291,17 +290,8 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
           </div>
         </header>
         <main className="min-w-0 flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:px-8">{children}</main>
-        <footer className="flex flex-col items-center justify-center gap-2 border-t border-border px-4 py-5 text-center text-xs text-muted-foreground sm:flex-row sm:gap-4 lg:px-8">
+        <footer className="flex items-center justify-center border-t border-border px-4 py-5 text-center text-xs text-muted-foreground">
           <span>Made by <span className="font-medium text-foreground">Sangam Kunwar</span></span>
-          <span aria-hidden="true" className="hidden text-border sm:inline">•</span>
-          <div className="flex items-center gap-4">
-            <Link to="/support" className="inline-flex items-center gap-1.5 font-medium text-primary transition-colors hover:text-primary/80">
-              <LifeBuoy className="h-3.5 w-3.5" /> Support center
-            </Link>
-            <Link to="/feedback" className="font-medium text-primary transition-colors hover:text-primary/80">
-              Share feedback
-            </Link>
-          </div>
         </footer>
       </div>
     </div>
