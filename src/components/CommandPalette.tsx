@@ -64,13 +64,28 @@ export function CommandPalette() {
     }
     setPeopleSearchError(null);
     const timer = window.setTimeout(async () => {
-      const { data, error } = await supabase.rpc("search_users", { search_term: term });
-      if (error) {
+      const pattern = `%${term.replace(/[%_,]/g, "")}%`;
+      const [{ data: byUsername, error: usernameError }, { data: byName, error: nameError }] = await Promise.all([
+        supabase.from("profiles").select("id, username, display_name, avatar_url").ilike("username", pattern).limit(20),
+        supabase.from("profiles").select("id, username, display_name, avatar_url").ilike("display_name", pattern).limit(20),
+      ]);
+      if (usernameError || nameError) {
         setPeople([]);
-        setPeopleSearchError("Apply the follow-search migration in Supabase to search users.");
+        setPeopleSearchError("User search is unavailable right now. Please try again.");
         return;
       }
-      setPeople((data as typeof people) ?? []);
+      const profiles = [...(byUsername ?? []), ...(byName ?? [])].filter(
+        (profile, index, all) => all.findIndex((item) => item.id === profile.id) === index,
+      ).filter((profile) => profile.id !== userId);
+      const { data: follows } = await supabase.from("user_follows").select("following_id").eq("follower_id", userId);
+      const following = new Set((follows ?? []).map((follow) => follow.following_id));
+      setPeople(profiles.map((profile) => ({
+        user_id: profile.id,
+        username: profile.username,
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+        is_following: following.has(profile.id),
+      })));
     }, 250);
     return () => window.clearTimeout(timer);
   }, [open, userId, personSearch]);
