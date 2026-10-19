@@ -28,7 +28,13 @@ export function CommandPalette() {
   const { data: profile } = useProfile(userId);
   const [snippets, setSnippets] = useState<{ id: string; title: string; language: string }[]>([]);
   const [people, setPeople] = useState<
-    { user_id: string; username: string | null; display_name: string | null; avatar_url: string | null; is_following: boolean }[]
+    {
+      user_id: string;
+      username: string | null;
+      display_name: string | null;
+      avatar_url: string | null;
+      is_following: boolean;
+    }[]
   >([]);
   const [personSearch, setPersonSearch] = useState("");
   const [peopleSearchError, setPeopleSearchError] = useState<string | null>(null);
@@ -65,27 +71,46 @@ export function CommandPalette() {
     setPeopleSearchError(null);
     const timer = window.setTimeout(async () => {
       const pattern = `%${term.replace(/[%_,]/g, "")}%`;
-      const [{ data: byUsername, error: usernameError }, { data: byName, error: nameError }] = await Promise.all([
-        supabase.from("profiles").select("id, username, display_name, avatar_url").ilike("username", pattern).limit(20),
-        supabase.from("profiles").select("id, username, display_name, avatar_url").ilike("display_name", pattern).limit(20),
-      ]);
+      const [{ data: byUsername, error: usernameError }, { data: byName, error: nameError }] =
+        await Promise.all([
+          supabase
+            .from("profiles")
+            .select("user_id, username, display_name, avatar_url")
+            .ilike("username", pattern)
+            .limit(20),
+          supabase
+            .from("profiles")
+            .select("user_id, username, display_name, avatar_url")
+            .ilike("display_name", pattern)
+            .limit(20),
+        ]);
       if (usernameError || nameError) {
         setPeople([]);
         setPeopleSearchError("User search is unavailable right now. Please try again.");
         return;
       }
-      const profiles = [...(byUsername ?? []), ...(byName ?? [])].filter(
-        (profile, index, all) => all.findIndex((item) => item.id === profile.id) === index,
-      ).filter((profile) => profile.id !== userId);
-      const { data: follows } = await supabase.from("user_follows").select("following_id").eq("follower_id", userId);
-      const following = new Set((follows ?? []).map((follow) => follow.following_id));
-      setPeople(profiles.map((profile) => ({
-        user_id: profile.id,
-        username: profile.username,
-        display_name: profile.display_name,
-        avatar_url: profile.avatar_url,
-        is_following: following.has(profile.id),
-      })));
+      const profiles = [...(byUsername ?? []), ...(byName ?? [])]
+        .filter(
+          (profile, index, all) =>
+            all.findIndex((item) => item.user_id === profile.user_id) === index,
+        )
+        .filter((profile) => profile.user_id !== userId);
+      const { data: follows } = await (supabase as any)
+        .from("user_follows")
+        .select("following_id")
+        .eq("follower_id", userId);
+      const following = new Set(
+        (follows ?? []).map((follow: { following_id: string }) => follow.following_id),
+      );
+      setPeople(
+        profiles.map((profile) => ({
+          user_id: profile.user_id,
+          username: profile.username,
+          display_name: profile.display_name,
+          avatar_url: profile.avatar_url,
+          is_following: following.has(profile.user_id),
+        })),
+      );
     }, 250);
     return () => window.clearTimeout(timer);
   }, [open, userId, personSearch]);
@@ -93,12 +118,26 @@ export function CommandPalette() {
   const toggleFollow = async (person: (typeof people)[number]) => {
     if (!userId) return;
     if (person.is_following) {
-      await supabase.from("user_follows").delete().eq("follower_id", userId).eq("following_id", person.user_id);
+      await (supabase as any)
+        .from("user_follows")
+        .delete()
+        .eq("follower_id", userId)
+        .eq("following_id", person.user_id);
     } else {
-      await supabase.from("user_follows").insert({ follower_id: userId, following_id: person.user_id });
+      await (supabase as any)
+        .from("user_follows")
+        .insert({ follower_id: userId, following_id: person.user_id });
     }
-    setPeople((current) => current.map((item) => item.user_id === person.user_id ? { ...item, is_following: !item.is_following } : item));
-    toast.success(person.is_following ? `Unfollowed ${person.username ?? "user"}` : `Following ${person.username ?? "user"}`);
+    setPeople((current) =>
+      current.map((item) =>
+        item.user_id === person.user_id ? { ...item, is_following: !item.is_following } : item,
+      ),
+    );
+    toast.success(
+      person.is_following
+        ? `Unfollowed ${person.username ?? "user"}`
+        : `Following ${person.username ?? "user"}`,
+    );
   };
 
   const go = (to: string) => {
@@ -153,7 +192,11 @@ export function CommandPalette() {
             {people.map((person) => (
               <Command.Item key={person.user_id} onSelect={() => toggleFollow(person)}>
                 {person.avatar_url ? (
-                  <img src={person.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                  <img
+                    src={person.avatar_url}
+                    alt=""
+                    className="h-7 w-7 rounded-full object-cover"
+                  />
                 ) : (
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
                     {(person.display_name ?? person.username ?? "U").slice(0, 1).toUpperCase()}
@@ -161,9 +204,13 @@ export function CommandPalette() {
                 )}
                 <span className="min-w-0 flex-1 truncate">
                   <span className="block truncate">{person.display_name ?? person.username}</span>
-                  <span className="block truncate text-xs text-muted-foreground">@{person.username ?? "user"}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    @{person.username ?? "user"}
+                  </span>
                 </span>
-                <span className="text-xs font-medium text-primary">{person.is_following ? "Following" : "Follow"}</span>
+                <span className="text-xs font-medium text-primary">
+                  {person.is_following ? "Following" : "Follow"}
+                </span>
               </Command.Item>
             ))}
           </Command.Group>
@@ -220,7 +267,9 @@ export function CommandPalette() {
               <Command.Item key={s.id} onSelect={() => go("/snippets")}>
                 <Code2 className="h-4 w-4 text-muted-foreground" />
                 <span className="truncate">{s.title}</span>
-                <span className="ml-auto font-mono text-xs text-muted-foreground">{s.language}</span>
+                <span className="ml-auto font-mono text-xs text-muted-foreground">
+                  {s.language}
+                </span>
               </Command.Item>
             ))}
           </Command.Group>

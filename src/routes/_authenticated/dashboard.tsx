@@ -31,7 +31,16 @@ function DashboardPage() {
   const { userId } = useSession();
   const { data: profile, isLoading: profileLoading } = useProfile(userId);
   const [peopleSearch, setPeopleSearch] = useState("");
-  const [people, setPeople] = useState<Array<{ user_id: string; username: string | null; display_name: string | null; avatar_url: string | null; is_following: boolean; follows_you: boolean }>>([]);
+  const [people, setPeople] = useState<
+    Array<{
+      user_id: string;
+      username: string | null;
+      display_name: string | null;
+      avatar_url: string | null;
+      is_following: boolean;
+      follows_you: boolean;
+    }>
+  >([]);
   const [peopleError, setPeopleError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,29 +52,48 @@ function DashboardPage() {
     }
     const timer = window.setTimeout(async () => {
       const pattern = `%${term.replace(/[%_,]/g, "")}%`;
-      const [{ data: byUsername, error: usernameError }, { data: byName, error: nameError }] = await Promise.all([
-        supabase.from("profiles").select("id, username, display_name, avatar_url").ilike("username", pattern).limit(20),
-        supabase.from("profiles").select("id, username, display_name, avatar_url").ilike("display_name", pattern).limit(20),
-      ]);
+      const [{ data: byUsername, error: usernameError }, { data: byName, error: nameError }] =
+        await Promise.all([
+          supabase
+            .from("profiles")
+            .select("user_id, username, display_name, avatar_url")
+            .ilike("username", pattern)
+            .limit(20),
+          supabase
+            .from("profiles")
+            .select("user_id, username, display_name, avatar_url")
+            .ilike("display_name", pattern)
+            .limit(20),
+        ]);
       if (usernameError || nameError) {
         setPeople([]);
         setPeopleError("User search is unavailable right now. Please try again.");
         return;
       }
-      const profiles = [...(byUsername ?? []), ...(byName ?? [])].filter(
-        (profile, index, all) => all.findIndex((item) => item.id === profile.id) === index,
-      ).filter((profile) => profile.id !== userId);
-      const { data: follows } = await supabase.from("user_follows").select("following_id").eq("follower_id", userId);
-      const following = new Set((follows ?? []).map((follow) => follow.following_id));
+      const profiles = [...(byUsername ?? []), ...(byName ?? [])]
+        .filter(
+          (profile, index, all) =>
+            all.findIndex((item) => item.user_id === profile.user_id) === index,
+        )
+        .filter((profile) => profile.user_id !== userId);
+      const { data: follows } = await (supabase as any)
+        .from("user_follows")
+        .select("following_id")
+        .eq("follower_id", userId);
+      const following = new Set(
+        (follows ?? []).map((follow: { following_id: string }) => follow.following_id),
+      );
       setPeopleError(null);
-      setPeople(profiles.map((profile) => ({
-        user_id: profile.id,
-        username: profile.username,
-        display_name: profile.display_name,
-        avatar_url: profile.avatar_url,
-        is_following: following.has(profile.id),
-        follows_you: false,
-      })));
+      setPeople(
+        profiles.map((profile) => ({
+          user_id: profile.user_id,
+          username: profile.username,
+          display_name: profile.display_name,
+          avatar_url: profile.avatar_url,
+          is_following: following.has(profile.user_id),
+          follows_you: false,
+        })),
+      );
     }, 250);
     return () => window.clearTimeout(timer);
   }, [peopleSearch, userId]);
@@ -81,10 +109,25 @@ function DashboardPage() {
     enabled: !!userId,
     queryFn: async () => {
       const [notes, snippets, reviews, leaders] = await Promise.all([
-        supabase.from("notes").select("id", { count: "exact", head: true }).eq("user_id", userId!).eq("is_deleted", false),
-        supabase.from("snippets").select("id", { count: "exact", head: true }).eq("user_id", userId!),
-        supabase.from("review_requests").select("id, title, language, status, created_at").order("created_at", { ascending: false }).limit(4),
-        supabase.from("profiles").select("username, display_name, xp").order("xp", { ascending: false }).limit(5),
+        supabase
+          .from("notes")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId!)
+          .eq("is_deleted", false),
+        supabase
+          .from("snippets")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId!),
+        supabase
+          .from("review_requests")
+          .select("id, title, language, status, created_at")
+          .order("created_at", { ascending: false })
+          .limit(4),
+        supabase
+          .from("profiles")
+          .select("username, display_name, xp")
+          .order("xp", { ascending: false })
+          .limit(5),
       ]);
       return {
         notesCount: notes.count ?? 0,
@@ -98,13 +141,23 @@ function DashboardPage() {
   const toggleFollow = async (person: (typeof people)[number]) => {
     if (!userId) return;
     const { error } = person.is_following
-      ? await supabase.from("user_follows").delete().eq("follower_id", userId).eq("following_id", person.user_id)
-      : await supabase.from("user_follows").insert({ follower_id: userId, following_id: person.user_id });
+      ? await (supabase as any)
+          .from("user_follows")
+          .delete()
+          .eq("follower_id", userId)
+          .eq("following_id", person.user_id)
+      : await (supabase as any)
+          .from("user_follows")
+          .insert({ follower_id: userId, following_id: person.user_id });
     if (error) {
       setPeopleError("Could not update follow status. Please try again.");
       return;
     }
-    setPeople((current) => current.map((item) => item.user_id === person.user_id ? { ...item, is_following: !item.is_following } : item));
+    setPeople((current) =>
+      current.map((item) =>
+        item.user_id === person.user_id ? { ...item, is_following: !item.is_following } : item,
+      ),
+    );
   };
 
   const xp = profile?.xp ?? 0;
@@ -134,8 +187,12 @@ function DashboardPage() {
         >
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 id="find-people-heading" className="font-display text-lg font-semibold">Find people</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Search by name, username, or email and follow developers.</p>
+              <h2 id="find-people-heading" className="font-display text-lg font-semibold">
+                Find people
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Search by name, username, or email and follow developers.
+              </p>
             </div>
             <Search className="hidden h-5 w-5 text-primary sm:block" />
           </div>
@@ -153,43 +210,69 @@ function DashboardPage() {
           {peopleSearch.trim().length >= 2 && !peopleError && (
             <div className="mt-3 space-y-2">
               {people.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-sm text-muted-foreground">No people found.</p>
-              ) : people.map((person) => (
-                <div key={person.user_id} className="flex items-center gap-3 rounded-lg border border-border/70 px-3 py-2">
-                  {person.avatar_url ? (
-                    <img src={person.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
-                  ) : (
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
-                      {(person.display_name ?? person.username ?? "U").slice(0, 1).toUpperCase()}
-                    </span>
-                  )}
-                  <Link to="/u/$username" params={{ username: person.username ?? "" }} className="min-w-0 flex-1 hover:text-primary">
-                    <span className="block truncate text-sm font-medium">{person.display_name ?? person.username}</span>
-                    <span className="block truncate text-xs text-muted-foreground">@{person.username ?? "user"}</span>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => toggleFollow(person)}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:border-primary/50 hover:text-primary"
+                <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-sm text-muted-foreground">
+                  No people found.
+                </p>
+              ) : (
+                people.map((person) => (
+                  <div
+                    key={person.user_id}
+                    className="flex items-center gap-3 rounded-lg border border-border/70 px-3 py-2"
                   >
-                    {person.is_following ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                    {person.is_following ? "Following" : person.follows_you ? "Follow back" : "Follow"}
-                  </button>
-                  <Link
-                    to="/messages"
-                    search={{ userId: person.user_id, username: person.username ?? "" }}
-                    aria-label={`Message ${person.display_name ?? person.username ?? "user"}`}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:border-primary/50 hover:text-primary"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    Message
-                  </Link>
-                </div>
-              ))}
+                    {person.avatar_url ? (
+                      <img
+                        src={person.avatar_url}
+                        alt=""
+                        className="h-9 w-9 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                        {(person.display_name ?? person.username ?? "U").slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                    <Link
+                      to="/u/$username"
+                      params={{ username: person.username ?? "" }}
+                      className="min-w-0 flex-1 hover:text-primary"
+                    >
+                      <span className="block truncate text-sm font-medium">
+                        {person.display_name ?? person.username}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        @{person.username ?? "user"}
+                      </span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => toggleFollow(person)}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:border-primary/50 hover:text-primary"
+                    >
+                      {person.is_following ? (
+                        <UserCheck className="h-3.5 w-3.5" />
+                      ) : (
+                        <UserPlus className="h-3.5 w-3.5" />
+                      )}
+                      {person.is_following
+                        ? "Following"
+                        : person.follows_you
+                          ? "Follow back"
+                          : "Follow"}
+                    </button>
+                    <Link
+                      to="/messages"
+                      search={{ userId: person.user_id, username: person.username ?? "" }}
+                      aria-label={`Message ${person.display_name ?? person.username ?? "user"}`}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:border-primary/50 hover:text-primary"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      Message
+                    </Link>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </motion.section>
-
 
         <div className="mt-6 grid gap-4 md:grid-cols-6">
           {/* XP card */}
@@ -199,7 +282,9 @@ function DashboardPage() {
             className="bento-card p-6 md:col-span-2"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Progress</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Progress
+              </span>
               <Flame className="h-4 w-4 text-accent" />
             </div>
             <p className="mt-3 font-display text-4xl font-bold text-primary">Lv {level}</p>
@@ -230,7 +315,9 @@ function DashboardPage() {
               className="bento-card p-6 md:col-span-2"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{c.label}</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {c.label}
+                </span>
                 <c.icon className="h-4 w-4 text-primary" />
               </div>
               {c.value === undefined ? (
@@ -238,7 +325,10 @@ function DashboardPage() {
               ) : (
                 <p className="mt-3 font-display text-4xl font-bold">{c.value}</p>
               )}
-              <Link to={c.to} className="mt-2 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+              <Link
+                to={c.to}
+                className="mt-2 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              >
                 Open <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </motion.div>
@@ -252,7 +342,9 @@ function DashboardPage() {
             className="bento-card p-6 md:col-span-2"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Portfolio</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Portfolio
+              </span>
               <LayoutGrid className="h-4 w-4 text-primary" />
             </div>
             <p className="mt-3 text-sm">
@@ -272,7 +364,10 @@ function DashboardPage() {
                 View live <ArrowRight className="h-3.5 w-3.5" />
               </a>
             ) : (
-              <Link to="/settings" className="mt-2 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+              <Link
+                to="/settings"
+                className="mt-2 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              >
                 Go public <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             )}
@@ -286,7 +381,9 @@ function DashboardPage() {
             className="bento-card p-6 md:col-span-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Review Labs</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Review Labs
+              </span>
               <GitPullRequest className="h-4 w-4 text-primary" />
             </div>
             <div className="mt-3 space-y-2">
@@ -300,12 +397,18 @@ function DashboardPage() {
                       className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2 text-sm transition-colors hover:border-primary/40"
                     >
                       <span className="truncate">{r.title}</span>
-                      <Badge variant={r.status === "open" ? "default" : "outline"}>{r.status}</Badge>
+                      <Badge variant={r.status === "open" ? "default" : "outline"}>
+                        {r.status}
+                      </Badge>
                     </Link>
                   ))
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No submissions yet — <Link to="/reviews" className="text-primary hover:underline">be the first</Link>.
+                    No submissions yet —{" "}
+                    <Link to="/reviews" className="text-primary hover:underline">
+                      be the first
+                    </Link>
+                    .
                   </p>
                 )
               ) : (
@@ -325,7 +428,9 @@ function DashboardPage() {
             className="bento-card p-6 md:col-span-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Top hackers</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Top hackers
+              </span>
               <Trophy className="h-4 w-4 text-accent" />
             </div>
             <div className="mt-3 space-y-2">
@@ -344,7 +449,10 @@ function DashboardPage() {
                   <Skeleton className="h-6 w-full" />
                 </>
               )}
-              <Link to="/leaderboard" className="inline-flex items-center gap-1 pt-1 text-sm text-primary hover:underline">
+              <Link
+                to="/leaderboard"
+                className="inline-flex items-center gap-1 pt-1 text-sm text-primary hover:underline"
+              >
                 Full leaderboard <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
