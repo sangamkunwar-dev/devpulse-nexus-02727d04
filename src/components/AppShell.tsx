@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession, useProfile } from "@/hooks/useSession";
 import { levelFromXp } from "@/lib/levels";
 import { cn } from "@/lib/utils";
+import { SupportFeedbackWidget } from "@/components/SupportFeedbackWidget";
 
 type NotificationRow = {
   id: string;
@@ -294,6 +295,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
           <span>Made by <span className="font-medium text-foreground">Sangam Kunwar</span></span>
         </footer>
       </div>
+      <SupportFeedbackWidget userId={userId} isAdmin={!!isAdmin} />
     </div>
   );
 }

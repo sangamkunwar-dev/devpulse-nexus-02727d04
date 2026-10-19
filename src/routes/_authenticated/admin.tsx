@@ -1,6 +1,5 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
 import {
   Shield,
   Users,
@@ -8,12 +7,7 @@ import {
   NotebookPen,
   Code2,
   FolderKanban,
-  Ticket,
-  Clock3,
-  CheckCircle2,
 } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -34,72 +28,9 @@ function useIsAdmin(userId: string | null) {
   });
 }
 
-type TicketTable = {
-  update: (values: Record<string, unknown>) => {
-    eq: (column: string, value: string) => Promise<{ error: unknown }>;
-  };
-};
-
-type SupportTicket = {
-  id: string;
-  subject: string;
-  message: string;
-  status: "open" | "in_progress" | "resolved";
-  created_at: string;
-  user_id: string;
-  profile?: { display_name: string | null; username: string | null } | null;
-};
-
-function useSupportTickets(enabled: boolean) {
-  return useQuery({
-    queryKey: ["admin-support-tickets"],
-    enabled,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("support_tickets" as never)
-        .select(
-          "id, subject, message, status, created_at, user_id, profiles(display_name, username)",
-        )
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return (data ?? []) as unknown as SupportTicket[];
-    },
-  });
-}
-
 function AdminPage() {
   const { userId, loading } = useSession();
   const { data: isAdmin, isLoading: checkingRole } = useIsAdmin(userId);
-  const tickets = useSupportTickets(!!isAdmin);
-
-  const refetchTickets = tickets.refetch;
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    const channel = supabase
-      .channel("admin-support-tickets")
-      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, () => {
-        void refetchTickets();
-      })
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [isAdmin, refetchTickets]);
-
-  const updateTicket = async (id: string, status: SupportTicket["status"]) => {
-    const { error } = await (supabase.from("support_tickets" as never) as unknown as TicketTable)
-      .update({ status })
-      .eq("id", id);
-    if (error) {
-      toast.error("Ticket status could not be updated.");
-      return;
-    }
-    toast.success(status === "resolved" ? "Issue closed." : "Issue moved to in progress.");
-    await tickets.refetch();
-  };
-
   const stats = useQuery({
     queryKey: ["admin-stats"],
     enabled: !!isAdmin,
@@ -172,69 +103,6 @@ function AdminPage() {
               <div className="text-xs text-muted-foreground">{card.label}</div>
             </div>
           ))}
-        </div>
-
-        <div className="bento-card p-5">
-          <div className="flex items-center gap-2">
-            <Ticket className="h-5 w-5 text-primary" />
-            <div>
-              <h3 className="font-display text-lg font-semibold">Support tickets</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Review every user message and contact profile.
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-col gap-3">
-            {tickets.isLoading && <Skeleton className="h-24 w-full" />}
-            {tickets.isError && (
-              <p className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                Support tickets are not available yet. Apply the SQL setup provided with this
-                update.
-              </p>
-            )}
-            {!tickets.isLoading && !tickets.isError && !tickets.data?.length && (
-              <p className="text-sm text-muted-foreground">
-                No support tickets have been submitted.
-              </p>
-            )}
-            {tickets.data?.map((ticket) => (
-              <article key={ticket.id} className="rounded-xl border border-border p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-primary">{ticket.id}</span>
-                      <Badge variant={ticket.status === "resolved" ? "secondary" : "outline"}>
-                        {ticket.status.replace("_", " ")}
-                      </Badge>
-                    </div>
-                    <h4 className="mt-2 font-medium">{ticket.subject}</h4>
-                    <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
-                      {ticket.message}
-                    </p>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      From{" "}
-                      {ticket.profile?.display_name || ticket.profile?.username || ticket.user_id} ·{" "}
-                      {new Date(ticket.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateTicket(ticket.id, "in_progress")}
-                    >
-                      <Clock3 data-icon="inline-start" />
-                      Working
-                    </Button>
-                    <Button size="sm" onClick={() => updateTicket(ticket.id, "resolved")}>
-                      <CheckCircle2 data-icon="inline-start" />
-                      Close issue
-                    </Button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
         </div>
 
         <div className="bento-card p-5">
