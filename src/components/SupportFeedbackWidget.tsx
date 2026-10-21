@@ -26,11 +26,17 @@ export function SupportFeedbackWidget({ userId, isAdmin }: { userId: string | nu
 
   const loadTickets = async () => {
     if (!isAdmin) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("support_tickets" as never)
       .select("id, subject, message, status, created_at")
       .order("created_at", { ascending: false })
       .limit(8);
+
+    if (error) {
+      setTickets([]);
+      return;
+    }
+
     setTickets((data ?? []) as unknown as Ticket[]);
   };
 
@@ -40,16 +46,28 @@ export function SupportFeedbackWidget({ userId, isAdmin }: { userId: string | nu
 
   const submit = async () => {
     const trimmed = message.trim();
-    if (!userId || !trimmed) return;
+    if (!userId) {
+      toast.error("Please sign in before sending a message.");
+      return;
+    }
+    if (!trimmed) return;
+
     setSending(true);
     const { error } = await (supabase.from("support_tickets" as never) as any).insert({
       user_id: userId,
       subject: kind === "feedback" ? "Product feedback" : "Support request",
       message: trimmed,
+      status: "open",
     });
     setSending(false);
+
     if (error) {
-      toast.error("Your message could not be sent. Please try again.");
+      const isMissingTable = error.code === "42P01" || error.message?.includes("support_tickets");
+      toast.error(
+        isMissingTable
+          ? "Messaging is not set up yet. Please ask the administrator to run the support SQL."
+          : "Your message could not be sent. Please check your connection and try again.",
+      );
       return;
     }
     setMessage("");
