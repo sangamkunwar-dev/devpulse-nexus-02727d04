@@ -25,11 +25,22 @@ function AuthPage() {
   const [role, setRole] = useState<"student" | "teacher">("student");
 
   const routeAfterAuth = async (userId: string) => {
-    const { data: profile } = await supabase
+    const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+    if (roleError) throw roleError;
+    if (isAdmin) {
+      navigate({ to: "/admin", replace: true });
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("user_id", userId)
       .maybeSingle();
+    if (profileError) throw profileError;
     navigate({ to: profile?.role === "teacher" ? "/teacher" : "/dashboard", replace: true });
   };
 
