@@ -46,15 +46,20 @@ export function SupportFeedbackWidget({ userId, isAdmin }: { userId: string | nu
 
   const submit = async () => {
     const trimmed = message.trim();
-    if (!userId) {
-      toast.error("Please sign in before sending a message.");
-      return;
-    }
     if (!trimmed) return;
 
     setSending(true);
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const currentUserId = authData.user?.id ?? userId;
+
+    if (authError || !currentUserId) {
+      setSending(false);
+      toast.error("Your session has expired. Please sign in again.");
+      return;
+    }
+
     const { error } = await (supabase.from("support_tickets" as never) as any).insert({
-      user_id: userId,
+      user_id: currentUserId,
       subject: kind === "feedback" ? "Product feedback" : "Support request",
       message: trimmed,
       status: "open",
