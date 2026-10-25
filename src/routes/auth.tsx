@@ -111,7 +111,17 @@ function AuthPage() {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Authentication failed";
-      toast.error(msg.includes("Invalid login") ? "Wrong email or password." : msg);
+      const normalizedEmail = email.trim().toLowerCase();
+      const isAdminEmail = normalizedEmail === "sangamkunwar48@gmail.com";
+      if (msg.includes("Invalid login")) {
+        toast.error("Wrong email or password. Use the full admin email: sangamkunwar48@gmail.com.");
+      } else if (msg.toLowerCase().includes("email not confirmed")) {
+        toast.error("Confirm your email before signing in, then try again.");
+      } else if (isAdminEmail && msg.toLowerCase().includes("has_role")) {
+        toast.error("Your account is signed in, but the admin role is not assigned yet. Apply the admin SQL migration, then sign in again.");
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setBusy(false);
     }
