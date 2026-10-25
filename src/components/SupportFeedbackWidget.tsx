@@ -62,10 +62,16 @@ export function SupportFeedbackWidget({ userId, isAdmin }: { userId: string | nu
     setSending(false);
 
     if (error) {
-      const isMissingTable = error.code === "42P01" || error.message?.includes("support_tickets");
+      const errorCode = typeof error.code === "string" ? error.code : "";
+      const errorMessage = typeof error.message === "string" ? error.message : "";
+      const isMissingTable =
+        errorCode === "42P01" ||
+        errorCode === "PGRST205" ||
+        /support_tickets|schema cache/i.test(errorMessage);
+
       toast.error(
         isMissingTable
-          ? "Messaging is not set up yet. Please ask the administrator to run the support SQL."
+          ? "Support messaging is temporarily unavailable. Please try again in a moment."
           : "Your message could not be sent. Please check your connection and try again.",
       );
       return;
