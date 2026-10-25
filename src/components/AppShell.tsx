@@ -254,7 +254,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
                 )}
               </button>
               {notificationsOpen && (
-                <div className="fixed left-2 right-2 top-14 z-50 overflow-hidden rounded-xl border border-border bg-popover shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-11 sm:w-[min(22rem,calc(100vw-2rem))]">
+                <div className="fixed inset-x-2 top-[calc(3.5rem+env(safe-area-inset-top))] z-50 max-h-[calc(100dvh-4.5rem-env(safe-area-inset-top))] overflow-hidden rounded-xl border border-border bg-popover shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:max-h-[min(32rem,calc(100dvh-5rem))] sm:w-[min(22rem,calc(100vw-2rem))]">
                   <div className="flex items-center justify-between border-b border-border px-4 py-3">
                     <div><p className="font-medium">Notifications</p><p className="text-xs text-muted-foreground">Activity from your DevPulse network</p></div>
                     {unreadNotificationCount > 0 && <span className="text-xs text-primary">{unreadNotificationCount} new</span>}

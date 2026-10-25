@@ -117,7 +117,9 @@
 
   body {
     min-width: 320px;
+    max-width: 100%;
     overflow-x: hidden;
+    overscroll-behavior-x: none;
     text-rendering: optimizeLegibility;
     background-color: var(--color-background);
     color: var(--color-foreground);
