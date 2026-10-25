@@ -84,7 +84,7 @@ export function NotificationSettings() {
 
   return (
     <div className="bento-card p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2">
           <Mail className="h-4 w-4 text-primary" />
           <h3 className="font-display text-lg font-semibold">Notification recipients</h3>
@@ -97,7 +97,7 @@ export function NotificationSettings() {
         These addresses receive an email when a new Daily Bug is published and when someone submits a correct answer.
       </p>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Input
           placeholder="admin@example.com"
           value={email}
@@ -110,7 +110,7 @@ export function NotificationSettings() {
       <div className="mt-3 space-y-1.5">
         {recipients.isLoading && <Skeleton className="h-10 w-full" />}
         {recipients.data?.map((r) => (
-          <div key={r.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
+          <div key={r.id} className="flex flex-col gap-2 rounded-lg border border-border px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <div className="truncate font-mono text-xs">{r.email}</div>
             </div>

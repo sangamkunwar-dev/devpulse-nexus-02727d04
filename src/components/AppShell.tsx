@@ -236,8 +236,8 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
           <button className="lg:hidden" onClick={() => setMobileOpen(true)}>
             <Menu className="h-5 w-5" />
           </button>
-          <h1 className="font-display text-base font-semibold">{title}</h1>
-          <div className="ml-auto flex items-center gap-3">
+          <h1 className="min-w-0 truncate font-display text-base font-semibold">{title}</h1>
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-3">
             <div className="relative">
               <button
                 type="button"
@@ -254,7 +254,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
                 )}
               </button>
               {notificationsOpen && (
-                <div className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-popover shadow-xl">
+                <div className="fixed left-2 right-2 top-14 z-50 overflow-hidden rounded-xl border border-border bg-popover shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-11 sm:w-[min(22rem,calc(100vw-2rem))]">
                   <div className="flex items-center justify-between border-b border-border px-4 py-3">
                     <div><p className="font-medium">Notifications</p><p className="text-xs text-muted-foreground">Activity from your DevPulse network</p></div>
                     {unreadNotificationCount > 0 && <span className="text-xs text-primary">{unreadNotificationCount} new</span>}

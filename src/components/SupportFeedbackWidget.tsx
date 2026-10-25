@@ -110,7 +110,7 @@ export function SupportFeedbackWidget({ userId, isAdmin }: { userId: string | nu
     <div className="pointer-events-none fixed inset-0 z-50">
       <div className="pointer-events-auto absolute" style={{ right: position.right, bottom: position.bottom }}>
         {open && (
-          <section className="absolute bottom-16 right-0 flex max-h-[min(38rem,calc(100dvh-5rem))] w-[min(23rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl shadow-black/15">
+          <section className="absolute bottom-16 right-1/2 flex max-h-[min(38rem,calc(100dvh-5rem))] w-[min(23rem,calc(100vw-1rem))] translate-x-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl shadow-black/15 sm:right-0 sm:translate-x-0">
             <div className="flex shrink-0 items-start justify-between bg-primary px-4 py-3 text-primary-foreground sm:px-5">
               <div><p className="flex items-center gap-2 text-sm font-semibold"><MessageCircle className="h-4 w-4" /> DevPulse support</p><p className="mt-0.5 text-xs text-primary-foreground/75">We read every message.</p></div>
               <button type="button" onClick={() => setOpen(false)} aria-label="Close support chat" className="rounded-md p-1 hover:bg-primary-foreground/15"><X className="h-4 w-4" /></button>
