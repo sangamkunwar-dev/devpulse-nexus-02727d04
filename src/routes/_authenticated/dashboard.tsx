@@ -27,6 +27,24 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function currentStreak(dates: string[]) {
+  const activeDays = new Set(dates.map((date) => date.slice(0, 10)));
+  let cursor = new Date(`${todayISO()}T00:00:00Z`);
+  const today = cursor.toISOString().slice(0, 10);
+
+  if (!activeDays.has(today)) {
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+    if (!activeDays.has(cursor.toISOString().slice(0, 10))) return 0;
+  }
+
+  let streak = 0;
+  while (activeDays.has(cursor.toISOString().slice(0, 10))) {
+    streak += 1;
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+  return streak;
+}
+
 function DashboardPage() {
   const navigate = useNavigate();
   const { userId } = useSession();
@@ -42,13 +60,13 @@ function DashboardPage() {
     queryKey: ["dashboard", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const [challenge, notes, snippets, reviews, leaders, myAttempt] = await Promise.all([
+      const [challenge, notes, snippets, reviews, leaders, attempts] = await Promise.all([
         supabase.from("challenges").select("id, title, language, difficulty, xp_reward").eq("challenge_date", todayISO()).maybeSingle(),
         supabase.from("notes").select("id", { count: "exact", head: true }).eq("user_id", userId!).eq("is_deleted", false),
         supabase.from("snippets").select("id", { count: "exact", head: true }).eq("user_id", userId!),
         supabase.from("review_requests").select("id, title, language, status, created_at").order("created_at", { ascending: false }).limit(4),
         supabase.from("profiles").select("username, display_name, xp").order("xp", { ascending: false }).limit(5),
-        null,
+        supabase.from("challenge_attempts").select("created_at").eq("user_id", userId!).order("created_at", { ascending: false }).limit(365),
       ]);
       let solvedToday = false;
       if (challenge.data) {
@@ -61,10 +79,10 @@ function DashboardPage() {
           .limit(1);
         solvedToday = (attempts?.length ?? 0) > 0;
       }
-      void myAttempt;
       return {
         challenge: challenge.data,
         solvedToday,
+        streak: currentStreak((attempts.data ?? []).map((attempt) => attempt.created_at)),
         notesCount: notes.count ?? 0,
         snippetsCount: snippets.count ?? 0,
         reviews: reviews.data ?? [],
@@ -149,6 +167,28 @@ function DashboardPage() {
             ) : (
               <Skeleton className="mt-3 h-16 w-2/3" />
             )}
+          </motion.div>
+
+          {/* Work streak */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bento-card p-6 md:col-span-2"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Work streak</span>
+              <Flame className="h-4 w-4 text-accent" />
+            </div>
+            {stats ? (
+              <>
+                <p className="mt-3 font-display text-4xl font-bold">{stats.streak}</p>
+                <p className="text-sm text-muted-foreground">consecutive active days</p>
+                <Link to="/history" className="mt-2 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                  View history <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </>
+            ) : <Skeleton className="mt-3 h-14 w-24" />}
           </motion.div>
 
           {/* Counts */}

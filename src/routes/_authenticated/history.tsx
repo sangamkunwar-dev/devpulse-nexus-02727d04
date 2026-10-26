@@ -63,17 +63,28 @@ function HistoryPage() {
     byDay.set(day, [...(byDay.get(day) ?? []), r]);
   }
 
+  const activeDays = new Set(byDay.keys());
+  let streak = 0;
+  const cursor = new Date();
+  const today = cursor.toISOString().slice(0, 10);
+  if (!activeDays.has(today)) cursor.setUTCDate(cursor.getUTCDate() - 1);
+  while (activeDays.has(cursor.toISOString().slice(0, 10))) {
+    streak += 1;
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+
   const stats = [
     { label: "Attempts", value: rows.length, icon: Target },
     { label: "Bugs squashed", value: solvedIds.size, icon: CheckCircle2 },
     { label: "Accuracy", value: `${accuracy}%`, icon: Flame },
+    { label: "Work streak", value: `${streak} days`, icon: Flame },
     { label: "Active days", value: byDay.size, icon: HistoryIcon },
   ];
 
   return (
     <AppShell title="My Challenge History">
       <div className="mx-auto max-w-4xl space-y-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {stats.map((s) => (
             <div key={s.label} className="bento-card p-4">
               <s.icon className="h-4 w-4 text-muted-foreground" />
