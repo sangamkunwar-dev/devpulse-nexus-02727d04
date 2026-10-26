@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
-import { Plus, Trash2, Globe, Lock, X, ExternalLink, Github, FolderKanban } from "lucide-react";
+import { Plus, Trash2, Globe, Lock, X, ExternalLink, Github, FolderKanban, RefreshCw, GitFork } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,9 @@ function ProjectsPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [repositories, setRepositories] = useState<Array<{ name: string; html_url: string; description: string | null }>>([]);
+  const [showRepositories, setShowRepositories] = useState(false);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -45,6 +48,62 @@ function ProjectsPage() {
   });
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["projects", userId] });
+
+  const syncRepositories = async () => {
+    setSyncing(true);
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.provider_token;
+    if (!token) {
+      toast.error("Reconnect with GitHub to grant repository access.");
+      setSyncing(false);
+      return;
+    }
+    const response = await fetch("https://api.github.com/user/repos?sort=updated&per_page=100", {
+      headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+      toast.error("GitHub did not return your repositories.");
+      setSyncing(false);
+      return;
+    }
+    setRepositories(await response.json());
+    setShowRepositories(true);
+    setSyncing(false);
+  };
+
+  const selectRepository = (repository: { name: string; html_url: string; description: string | null }) => {
+    setForm((current) => ({
+      ...current,
+      title: current.title || repository.name,
+      description: current.description || repository.description || "",
+      repo_url: repository.html_url,
+    }));
+    setShowForm(true);
+    setShowRepositories(false);
+    toast.success("Repository connected to the project form");
+  };
+
+  const createRepository = async () => {
+    const name = window.prompt("New GitHub repository name");
+    if (!name?.trim()) return;
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.provider_token;
+    if (!token) {
+      toast.error("Reconnect with GitHub to create repositories.");
+      return;
+    }
+    const response = await fetch("https://api.github.com/user/repos", {
+      method: "POST",
+      headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim(), private: false }),
+    });
+    if (!response.ok) {
+      toast.error("GitHub could not create that repository.");
+      return;
+    }
+    selectRepository(await response.json());
+    toast.success("Repository created and connected");
+  };
 
   const save = async () => {
     if (!form.title.trim()) {
@@ -97,11 +156,39 @@ function ProjectsPage() {
               Ship-worthy work. Public projects show on your <span className="text-foreground">bento portfolio</span>.
             </p>
           </div>
-          <Button onClick={() => setShowForm((s) => !s)}>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={syncRepositories} disabled={syncing}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? "animate-spin" : ""}`} /> Sync GitHub
+            </Button>
+            <Button variant="outline" onClick={createRepository}>
+              <GitFork className="mr-2 h-4 w-4" /> New repository
+            </Button>
+            <Button onClick={() => setShowForm((s) => !s)}>
             {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             {showForm ? "Cancel" : "Add project"}
-          </Button>
+            </Button>
+          </div>
         </div>
+
+        {showRepositories && (
+          <div className="bento-card mt-4 p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <p className="font-display font-semibold">Your GitHub repositories</p>
+                <p className="text-xs text-muted-foreground">Choose one to connect it to a DevPulse project.</p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setShowRepositories(false)}><X className="h-4 w-4" /></Button>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {repositories.map((repository) => (
+                <button key={repository.html_url} type="button" onClick={() => selectRepository(repository)} className="rounded-lg border p-3 text-left hover:border-primary">
+                  <span className="flex items-center gap-2 font-medium"><Github className="h-4 w-4" />{repository.name}</span>
+                  <span className="mt-1 line-clamp-2 block text-xs text-muted-foreground">{repository.description || "No description"}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <AnimatePresence>
           {showForm && (

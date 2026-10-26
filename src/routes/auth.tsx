@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Zap, Mail, Lock, Loader2, Github } from "lucide-react";
+import { Zap, Mail, Lock, Loader2, Github, Chrome } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client"; // Native Supabase Client
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -31,12 +31,13 @@ function AuthPage() {
   }, [navigate]);
 
   // FIX: Using direct supabase client instead of lovable wrapper
-  const handleGitHub = async () => {
+  const handleOAuth = async (provider: "github" | "google") => {
     try {
       setBusy(true);
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "github",
+        provider,
         options: {
+          scopes: provider === "github" ? "repo read:user user:email" : undefined,
           redirectTo:
             import.meta.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
             `${window.location.origin}/dashboard`,
@@ -45,7 +46,7 @@ function AuthPage() {
 
       if (error) throw error;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "GitHub sign-in failed.";
+      const msg = err instanceof Error ? err.message : `${provider} sign-in failed.`;
       toast.error(msg);
     } finally {
       setBusy(false);
@@ -109,10 +110,14 @@ function AuthPage() {
               : "Free forever for students & developers"}
           </p>
 
-          <Button variant="outline" className="mt-6 w-full" onClick={handleGitHub} disabled={busy}>
-            <Github className="mr-2 h-4 w-4" />
-            Continue with GitHub
-          </Button>
+          <div className="mt-6 grid gap-2 sm:grid-cols-2">
+            <Button variant="outline" onClick={() => handleOAuth("google")} disabled={busy}>
+              <Chrome className="mr-2 h-4 w-4" /> Google
+            </Button>
+            <Button variant="outline" onClick={() => handleOAuth("github")} disabled={busy}>
+              <Github className="mr-2 h-4 w-4" /> GitHub
+            </Button>
+          </div>
 
           <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
             <div className="h-px flex-1 bg-border" /> or with email{" "}
