@@ -4,13 +4,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Globe, Lock, Copy, Loader2, ExternalLink } from "lucide-react";
 
-const countries = [
-  ["US", "United States"], ["CA", "Canada"], ["GB", "United Kingdom"], ["IN", "India"],
-  ["NP", "Nepal"], ["AU", "Australia"], ["DE", "Germany"], ["FR", "France"],
-  ["BR", "Brazil"], ["JP", "Japan"], ["SG", "Singapore"], ["ZA", "South Africa"],
-] as const;
-
 const countryFlag = (code: string) => code.replace(/./g, (char) => String.fromCodePoint(char.charCodeAt(0) + 127397));
+
+const countries = (() => {
+  const regionCodes = typeof Intl.supportedValuesOf === "function"
+    ? Intl.supportedValuesOf("region").filter((code) => /^[A-Z]{2}$/.test(code))
+    : ["US", "CA", "GB", "IN", "NP", "AU", "DE", "FR", "BR", "JP", "SG", "ZA"];
+  const displayNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+  return regionCodes
+    .map((code) => ({ code, name: displayNames.of(code) ?? code }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+})();
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
