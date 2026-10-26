@@ -3,7 +3,17 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
-import { Plus, Trash2, Globe, Lock, X, ExternalLink, Github, FolderKanban, RefreshCw, GitFork } from "lucide-react";
+import { Plus, Trash2, Globe, Lock, X, ExternalLink, Github, FolderKanban, RefreshCw, GitFork, ShieldCheck, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -22,6 +32,12 @@ function ProjectsPage() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [showCreateRepository, setShowCreateRepository] = useState(false);
+  const [creatingRepository, setCreatingRepository] = useState(false);
+  const [repositoryName, setRepositoryName] = useState("");
+  const [repositoryPrivate, setRepositoryPrivate] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string; repoUrl: string | null } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [repositories, setRepositories] = useState<Array<{ name: string; html_url: string; description: string | null }>>([]);
   const [showRepositories, setShowRepositories] = useState(false);
   const [form, setForm] = useState({
@@ -84,25 +100,67 @@ function ProjectsPage() {
   };
 
   const createRepository = async () => {
-    const name = window.prompt("New GitHub repository name");
-    if (!name?.trim()) return;
+    const name = repositoryName.trim();
+    if (!name) {
+      toast.error("Add a repository name first.");
+      return;
+    }
+    setCreatingRepository(true);
     const { data } = await supabase.auth.getSession();
     const token = data.session?.provider_token;
     if (!token) {
       toast.error("Reconnect with GitHub to create repositories.");
+      setCreatingRepository(false);
       return;
     }
     const response = await fetch("https://api.github.com/user/repos", {
       method: "POST",
       headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), private: false }),
+      body: JSON.stringify({ name, private: repositoryPrivate }),
     });
     if (!response.ok) {
       toast.error("GitHub could not create that repository.");
+      setCreatingRepository(false);
       return;
     }
     selectRepository(await response.json());
+    setRepositoryName("");
+    setRepositoryPrivate(false);
+    setCreatingRepository(false);
     toast.success("Repository created and connected");
+  };
+
+  const remove = async () => {
+    if (!projectToDelete) return;
+    setDeleting(true);
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.provider_token;
+    if (projectToDelete.repoUrl && token) {
+      try {
+        const url = new URL(projectToDelete.repoUrl);
+        const parts = url.pathname.split("/").filter(Boolean);
+        if (url.hostname === "github.com" && parts.length >= 2) {
+          const response = await fetch(`https://api.github.com/repos/${parts[0]}/${parts[1]}`, {
+            method: "DELETE",
+            headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}` },
+          });
+          if (!response.ok && response.status !== 404) throw new Error("GitHub deletion failed");
+        }
+      } catch {
+        toast.error("The GitHub repository could not be deleted. The project was kept safe.");
+        setDeleting(false);
+        return;
+      }
+    }
+    const { error } = await supabase.from("projects").delete().eq("id", projectToDelete.id);
+    setDeleting(false);
+    if (error) {
+      toast.error("Could not delete project.");
+      return;
+    }
+    toast.success(projectToDelete.repoUrl ? "Project and GitHub repository deleted" : "Project deleted");
+    setProjectToDelete(null);
+    refresh();
   };
 
   const save = async () => {
@@ -139,14 +197,6 @@ function ProjectsPage() {
     }
   };
 
-  const remove = async (id: string) => {
-    const { error } = await supabase.from("projects").delete().eq("id", id);
-    if (!error) {
-      toast.success("Project deleted");
-      refresh();
-    }
-  };
-
   return (
     <AppShell title="Projects">
       <div className="mx-auto max-w-5xl">
@@ -160,7 +210,7 @@ function ProjectsPage() {
             <Button variant="outline" onClick={syncRepositories} disabled={syncing}>
               <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? "animate-spin" : ""}`} /> Sync GitHub
             </Button>
-            <Button variant="outline" onClick={createRepository}>
+            <Button variant="outline" onClick={() => setShowCreateRepository(true)}>
               <GitFork className="mr-2 h-4 w-4" /> New repository
             </Button>
             <Button onClick={() => setShowForm((s) => !s)}>
@@ -189,6 +239,40 @@ function ProjectsPage() {
             </div>
           </div>
         )}
+
+        <AnimatePresence>
+          {showCreateRepository && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mt-4">
+              <div className="bento-card overflow-hidden border-primary/30 p-6">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Github className="size-5" /></div>
+                    <div>
+                      <p className="font-display text-lg font-semibold">Create a GitHub repository</p>
+                      <p className="mt-1 max-w-xl text-sm text-muted-foreground">Start with a clean remote, then connect it to your DevPulse project in one step.</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setShowCreateRepository(false)} aria-label="Close repository creator"><X /></Button>
+                </div>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <Label htmlFor="repository-name">Repository name</Label>
+                    <Input id="repository-name" value={repositoryName} onChange={(e) => setRepositoryName(e.target.value)} placeholder="my-next-project" maxLength={100} autoFocus />
+                  </div>
+                  <Button onClick={createRepository} disabled={creatingRepository && !repositoryName.trim()}>
+                    <GitFork className="mr-2 size-4" /> Create repository
+                  </Button>
+                </div>
+                <button type="button" onClick={() => setRepositoryPrivate((value) => !value)} className="mt-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+                  {repositoryPrivate ? <Lock className="size-4" /> : <Globe className="size-4 text-primary" />}
+                  {repositoryPrivate ? "Private repository" : "Public repository"}
+                  <span className="text-xs text-muted-foreground">· change later on GitHub</span>
+                </button>
+                <div className="mt-4 flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground"><ShieldCheck className="size-4 text-primary" /> Your GitHub access token is used only for this action.</div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>
           {showForm && (
@@ -309,7 +393,7 @@ function ProjectsPage() {
                   >
                     {p.is_public ? <Globe className="h-4 w-4 text-primary" /> : <Lock className="h-4 w-4" />}
                   </Button>
-                  <Button size="icon" variant="ghost" title="Delete" onClick={() => remove(p.id)}>
+                  <Button size="icon" variant="ghost" title="Delete project" onClick={() => setProjectToDelete({ id: p.id, title: p.title, repoUrl: p.repo_url })}>
                     <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                   </Button>
                 </div>
@@ -318,6 +402,23 @@ function ProjectsPage() {
           ))}
         </div>
       </div>
+      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="size-5 text-destructive" /> Delete project?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <span className="font-medium text-foreground">{projectToDelete?.title}</span> from DevPulse
+              {projectToDelete?.repoUrl ? " and its linked GitHub repository" : ""}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={remove} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? "Deleting…" : "Delete permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
