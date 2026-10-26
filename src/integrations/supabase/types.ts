@@ -302,8 +302,9 @@ export type Database = {
           id: string
           is_public: boolean
           onboarded: boolean
-          role: string
-          skill_level: string
+      role: string
+      skill_level: string
+      region: string | null
           tagline: string | null
           tech_stack: string[]
           updated_at: string
@@ -323,6 +324,7 @@ export type Database = {
           onboarded?: boolean
           role?: string
           skill_level?: string
+          region?: string | null
           tagline?: string | null
           tech_stack?: string[]
           updated_at?: string
@@ -342,6 +344,7 @@ export type Database = {
           onboarded?: boolean
           role?: string
           skill_level?: string
+          region?: string | null
           tagline?: string | null
           tech_stack?: string[]
           updated_at?: string
