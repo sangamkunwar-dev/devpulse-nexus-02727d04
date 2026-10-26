@@ -59,18 +59,16 @@ function DashboardPage() {
     queryKey: ["dashboard", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const [notes, snippets, reviews, leaders, attempts] = await Promise.all([
+      const [notes, snippets, reviews, leaders] = await Promise.all([
         supabase.from("notes").select("id, created_at", { count: "exact" }).eq("user_id", userId!).eq("is_deleted", false),
         supabase.from("snippets").select("id, created_at", { count: "exact" }).eq("user_id", userId!),
         supabase.from("review_requests").select("id, title, language, status, created_at").eq("user_id", userId!).order("created_at", { ascending: false }).limit(4),
         supabase.from("profiles").select("username, display_name, xp").order("xp", { ascending: false }).limit(5),
-        supabase.from("challenge_attempts").select("created_at").eq("user_id", userId!).order("created_at", { ascending: false }).limit(365),
       ]);
       const activityDates = [
         ...(notes.data ?? []).map((item) => item.created_at),
         ...(snippets.data ?? []).map((item) => item.created_at),
         ...(reviews.data ?? []).map((item) => item.created_at),
-        ...(attempts.data ?? []).map((item) => item.created_at),
       ];
       return {
         streak: currentStreak(activityDates),
