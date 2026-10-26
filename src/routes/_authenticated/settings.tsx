@@ -3,6 +3,14 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Globe, Lock, Copy, Loader2, ExternalLink } from "lucide-react";
+
+const countries = [
+  ["US", "United States"], ["CA", "Canada"], ["GB", "United Kingdom"], ["IN", "India"],
+  ["NP", "Nepal"], ["AU", "Australia"], ["DE", "Germany"], ["FR", "France"],
+  ["BR", "Brazil"], ["JP", "Japan"], ["SG", "Singapore"], ["ZA", "South Africa"],
+] as const;
+
+const countryFlag = (code: string) => code.replace(/./g, (char) => String.fromCodePoint(char.charCodeAt(0) + 127397));
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -19,7 +27,7 @@ function SettingsPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
     display_name: "", username: "", tagline: "", bio: "",
-    github_username: "", website: "", tech_stack: "", region: "Global",
+    github_username: "", website: "", tech_stack: "", country: "",
     role: "student", skill_level: "beginner",
   });
   const [saving, setSaving] = useState(false);
@@ -35,7 +43,7 @@ function SettingsPage() {
         github_username: profile.github_username ?? "",
         website: profile.website ?? "",
         tech_stack: profile.tech_stack.join(", "),
-        region: profile.region ?? "Global",
+        country: profile.country ?? "",
         role: profile.role,
         skill_level: profile.skill_level,
       });
@@ -55,7 +63,7 @@ function SettingsPage() {
       github_username: form.github_username.trim().slice(0, 100) || null,
       website: form.website.trim().slice(0, 300) || null,
       tech_stack: form.tech_stack.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 20),
-      region: form.region,
+      country: form.country || null,
       role: form.role,
       skill_level: form.skill_level,
     }).eq("user_id", userId!);
@@ -125,7 +133,7 @@ function SettingsPage() {
             <div><Label>Username (portfolio URL)</Label><Input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} maxLength={40} /></div>
           </div>
           <div><Label>Tagline</Label><Input value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} placeholder="Full-stack tinkerer · coffee-driven" maxLength={150} /></div>
-  <div><Label>Region</Label><select className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })}><option>Global</option><option>North America</option><option>South America</option><option>Europe</option><option>Asia</option><option>Africa</option><option>Oceania</option></select></div>
+  <div><Label>Country</Label><select aria-label="Country" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}><option value="">Select your country</option>{countries.map(([code, name]) => <option key={code} value={code}>{countryFlag(code)} {name}</option>)}</select><p className="mt-1 text-xs text-muted-foreground">Choose your country to appear in the leaderboard with its flag.</p></div>
           <div><Label>Bio</Label><Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} maxLength={1000} /></div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div><Label>GitHub username</Label><Input value={form.github_username} onChange={(e) => setForm({ ...form, github_username: e.target.value })} maxLength={100} /></div>

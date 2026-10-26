@@ -3,6 +3,20 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { Trophy, Crown, Globe2, MapPin } from "lucide-react";
+
+const countryFlag = (code?: string | null) => {
+  if (!code || code.length !== 2) return "🌐";
+  return code.toUpperCase().replace(/./g, (char) => String.fromCodePoint(char.charCodeAt(0) + 127397));
+};
+
+const countryName = (code?: string | null) => {
+  if (!code) return "Global";
+  try {
+    return new Intl.DisplayNames([typeof navigator !== "undefined" ? navigator.language : "en"], { type: "region" }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+};
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,20 +35,20 @@ function LeaderboardPage() {
   const { data: profile } = useQuery({
     queryKey: ["leaderboard-profile", userId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("region").eq("user_id", userId!).single();
+      const { data, error } = await supabase.from("profiles").select("country").eq("user_id", userId!).single();
       if (error) throw error;
       return data;
     },
     enabled: Boolean(userId),
   });
   const { data: leaders, isLoading } = useQuery({
-    queryKey: ["leaderboard", scope, profile?.region],
+    queryKey: ["leaderboard", scope, profile?.country],
     queryFn: async () => {
       let query = supabase
         .from("profiles")
-        .select("user_id, username, display_name, avatar_url, xp, role, region, is_public")
+        .select("user_id, username, display_name, avatar_url, xp, role, country, is_public")
         .order("xp", { ascending: false });
-      if (scope === "region" && profile?.region) query = query.eq("region", profile.region);
+      if (scope === "region" && profile?.country) query = query.eq("country", profile.country);
       const { data, error } = await query.limit(50);
       if (error) throw error;
       return data;
@@ -46,13 +60,13 @@ function LeaderboardPage() {
       <div className="mx-auto max-w-3xl">
         <div className="text-center">
           <Trophy className="mx-auto h-8 w-8 text-accent" />
-          <h2 className="mt-2 font-display text-2xl font-bold">{scope === "global" ? "Global" : `${profile?.region ?? "Your region"}`} Leaderboard</h2>
+          <h2 className="mt-2 font-display text-2xl font-bold">{scope === "global" ? "Global" : profile?.country ? `${countryFlag(profile.country)} ${countryName(profile.country)}` : "Your country"} Leaderboard</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             XP from daily bugs and review contributions. Keep the streak alive.
           </p>
           <div className="mx-auto mt-5 flex w-fit rounded-xl border border-border bg-muted/40 p-1" role="tablist" aria-label="Leaderboard scope">
             <button type="button" role="tab" aria-selected={scope === "global"} onClick={() => setScope("global")} className={cn("flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors", scope === "global" ? "bg-background font-semibold shadow-sm" : "text-muted-foreground hover:text-foreground")}><Globe2 className="h-4 w-4" /> Global</button>
-            <button type="button" role="tab" aria-selected={scope === "region"} onClick={() => setScope("region")} className={cn("flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors", scope === "region" ? "bg-background font-semibold shadow-sm" : "text-muted-foreground hover:text-foreground")}><MapPin className="h-4 w-4" /> {profile?.region ?? "Your region"}</button>
+            <button type="button" role="tab" aria-selected={scope === "region"} onClick={() => setScope("region")} className={cn("flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors", scope === "region" ? "bg-background font-semibold shadow-sm" : "text-muted-foreground hover:text-foreground")}><MapPin className="h-4 w-4" /> {profile?.country ? `${countryFlag(profile.country)} ${countryName(profile.country)}` : "Your country"}</button>
           </div>
         </div>
 
@@ -94,7 +108,7 @@ function LeaderboardPage() {
                     {l.display_name ?? l.username} {me && <span className="text-primary">(you)</span>}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Lv {level} · {levelTitle(level)} · {l.region ?? "Global"}
+                    Lv {level} · {levelTitle(level)} · {l.country ? `${countryFlag(l.country)} ${countryName(l.country)}` : "Global"}
                   </p>
                 </div>
                 <Badge variant="secondary" className="capitalize">{l.role}</Badge>
