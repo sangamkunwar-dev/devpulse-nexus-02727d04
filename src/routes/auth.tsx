@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Zap, Mail, Lock, Loader2 } from "lucide-react";
+import { Zap, Mail, Lock, Loader2, Github } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client"; // Native Supabase Client
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -31,11 +31,11 @@ function AuthPage() {
   }, [navigate]);
 
   // FIX: Using direct supabase client instead of lovable wrapper
-  const handleGoogle = async () => {
+  const handleGitHub = async () => {
     try {
       setBusy(true);
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider: "github",
         options: {
           redirectTo: `${window.location.origin}/dashboard`,
         },
@@ -43,7 +43,7 @@ function AuthPage() {
 
       if (error) throw error;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Google sign-in failed.";
+      const msg = err instanceof Error ? err.message : "GitHub sign-in failed.";
       toast.error(msg);
     } finally {
       setBusy(false);
@@ -107,7 +107,8 @@ function AuthPage() {
               : "Free forever for students & developers"}
           </p>
 
-          <Button variant="outline" className="mt-6 w-full" onClick={handleGoogle} disabled={busy}>
+          <Button variant="outline" className="mt-6 w-full" onClick={handleGitHub} disabled={busy}>
+            <Github className="mr-2 h-4 w-4" />
             <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
@@ -126,7 +127,7 @@ function AuthPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            Continue with Google
+            Continue with GitHub
           </Button>
 
           <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">

@@ -132,8 +132,17 @@ function ProjectsPage() {
                     <Input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://…" />
                   </div>
                   <div>
-                    <Label>Repo URL (optional)</Label>
-                    <Input value={form.repo_url} onChange={(e) => setForm({ ...form, repo_url: e.target.value })} placeholder="https://github.com/…" />
+                    <Label>GitHub repository URL (optional)</Label>
+                    <Input
+                      value={form.repo_url}
+                      onChange={(e) => setForm({ ...form, repo_url: e.target.value })}
+                      placeholder="https://github.com/username/repository"
+                      type="url"
+                      inputMode="url"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Link the source repository so visitors can open the project code.
+                    </p>
                   </div>
                 </div>
                 <div>
