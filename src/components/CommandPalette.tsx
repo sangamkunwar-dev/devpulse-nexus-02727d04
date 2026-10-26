@@ -8,7 +8,6 @@ import {
   NotebookPen,
   Code2,
   GitPullRequest,
-  Bug,
   Trophy,
   Settings,
   Home,
@@ -116,9 +115,6 @@ export function CommandPalette() {
               </Command.Item>
               <Command.Item onSelect={() => go("/reviews")}>
                 <GitPullRequest className="h-4 w-4 text-muted-foreground" /> Review Labs
-              </Command.Item>
-              <Command.Item onSelect={() => go("/challenges")}>
-                <Bug className="h-4 w-4 text-muted-foreground" /> Daily Bug
               </Command.Item>
               <Command.Item onSelect={() => go("/leaderboard")}>
                 <Trophy className="h-4 w-4 text-muted-foreground" /> Leaderboard

@@ -4,7 +4,6 @@ import {
   Zap,
   NotebookPen,
   GitPullRequest,
-  Bug,
   Trophy,
   Command,
   LayoutGrid,
@@ -40,12 +39,6 @@ const FEATURES = [
     title: "Offline-First DevNotes",
     desc: "A Markdown editor that works with zero internet. Notes live in your browser and sync to the cloud the moment you reconnect.",
     span: "",
-  },
-  {
-    icon: Bug,
-    title: "Daily Bug Challenges",
-    desc: "One broken snippet per day — JavaScript, Python or SQL. Find the bug, patch it, earn XP, climb the global leaderboard.",
-    span: "md:col-span-2",
   },
   {
     icon: Command,
@@ -119,8 +112,8 @@ function Index() {
               Your entire dev life, <span className="text-gradient">one pulse.</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-              Offline-first notes, peer code reviews, daily bug hunts, a snippet vault and a
-              shareable bento portfolio — everything you need to learn, teach and ship.
+              Offline-first notes, peer code reviews, a snippet vault and a shareable bento
+              portfolio — everything you need to learn, teach and ship.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link to={session ? "/dashboard" : "/auth"}>
@@ -153,7 +146,6 @@ function Index() {
             <div className="space-y-1.5 p-5 font-mono text-[13px] leading-6">
               <p><span className="text-primary">➜</span> <span className="text-muted-foreground">~</span> devpulse sync</p>
               <p className="text-muted-foreground">✓ 3 notes synced from offline storage</p>
-              <p className="text-muted-foreground">✓ Daily Bug loaded — "Constant Trouble" (JS · 50 XP)</p>
               <p className="text-muted-foreground">✓ 2 new review comments on your submission</p>
               <p><span className="text-primary">➜</span> <span className="text-muted-foreground">~</span> <span className="animate-pulse">▊</span></p>
             </div>
@@ -167,7 +159,7 @@ function Index() {
           Everything works. <span className="text-gradient">Together.</span>
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-center text-muted-foreground">
-          Six connected modules that share one XP system, one profile and one command palette.
+          Five connected modules that share one XP system, one profile and one command palette.
         </p>
         <div className="mt-12 grid gap-4 md:grid-cols-3">
           {FEATURES.map((f, i) => (
@@ -202,8 +194,8 @@ function Index() {
               },
               {
                 n: "02",
-                t: "Learn, note, review, hunt bugs",
-                d: "Take offline notes in lectures, save snippets, review peers' code and patch the daily bug.",
+                t: "Learn, note and review",
+                d: "Take offline notes in lectures, save snippets and review peers' code.",
               },
               {
                 n: "03",
