@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   BookOpen,
@@ -39,6 +39,7 @@ type Enrollment = { id: string; student_id: string; created_at: string };
 type Panel = "requests" | "lessons" | "details";
 
 function TeacherDashboard() {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
@@ -94,8 +95,11 @@ function TeacherDashboard() {
   };
 
   const openManager = async (course: Course, panel: Panel = "details") => {
-    window.location.assign(`/teacher/manage/${course.id}?panel=${panel}`);
-    window.setTimeout(() => document.getElementById("course-manager")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+    await navigate({
+      to: "/teacher/manage/$courseId",
+      params: { courseId: course.id },
+      search: { panel },
+    });
     if (panel !== "requests") return;
     const { data, error } = await (supabase as any)
       .from("course_enrollments")
