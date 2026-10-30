@@ -4,8 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Globe, Lock, Copy, Loader2, ExternalLink } from "lucide-react";
 
-const countryFlag = (code: string) => code.replace(/./g, (char) => String.fromCodePoint(char.charCodeAt(0) + 127397));
-
 const countries = (() => {
   const regionCodes = typeof Intl.supportedValuesOf === "function"
     ? Intl.supportedValuesOf("region").filter((code) => /^[A-Z]{2}$/.test(code))
@@ -138,7 +136,7 @@ function SettingsPage() {
             <div><Label>Username (portfolio URL)</Label><Input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} maxLength={40} /></div>
           </div>
           <div><Label>Tagline</Label><Input value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} placeholder="Full-stack tinkerer · coffee-driven" maxLength={150} /></div>
-  <div><Label>Country</Label><select aria-label="Country" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}><option value="">Select your country</option>{countries.map(([code, name]) => <option key={code} value={code}>{countryFlag(code)} {name}</option>)}</select><p className="mt-1 text-xs text-muted-foreground">Choose your country to appear in the leaderboard with its flag.</p></div>
+  <div><Label>Country</Label><select aria-label="Country" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}><option value="">Select your country</option>{countries.map(({ code, name }) => <option key={code} value={code}>{name}</option>)}</select><p className="mt-1 text-xs text-muted-foreground">Choose your country to appear in the leaderboard with its flag.</p></div>
           <div><Label>Bio</Label><Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} maxLength={1000} /></div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div><Label>GitHub username</Label><Input value={form.github_username} onChange={(e) => setForm({ ...form, github_username: e.target.value })} maxLength={100} /></div>
