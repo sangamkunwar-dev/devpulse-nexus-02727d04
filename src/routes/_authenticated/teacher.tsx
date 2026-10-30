@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   BookOpen,
@@ -40,6 +40,11 @@ type Panel = "requests" | "lessons" | "details";
 
 function TeacherDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  if (location.pathname.startsWith("/teacher/manage/")) {
+    return <Outlet />;
+  }
   const [courses, setCourses] = useState<Course[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
