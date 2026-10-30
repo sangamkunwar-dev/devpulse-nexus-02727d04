@@ -37,6 +37,7 @@ import { Route as ApiCronDailyBugRouteImport } from './routes/api/cron/daily-bug
 import { Route as ApiPublicNotifyRouteImport } from './routes/api/public/notify'
 import { Route as ApiTeacherFileRouteImport } from './routes/api/teacher/file'
 import { Route as ApiTeacherUploadRouteImport } from './routes/api/teacher/upload'
+import { Route as AuthenticatedTeacherManageCourseIdRouteImport } from './routes/_authenticated/teacher.manage.$courseId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -179,6 +180,12 @@ const ApiTeacherUploadRoute = ApiTeacherUploadRouteImport.update({
   path: '/api/teacher/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTeacherManageCourseIdRoute =
+  AuthenticatedTeacherManageCourseIdRouteImport.update({
+    id: '/manage/$courseId',
+    path: '/manage/$courseId',
+    getParentRoute: () => AuthenticatedTeacherRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -200,7 +207,7 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AuthenticatedProjectsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/snippets': typeof AuthenticatedSnippetsRoute
-  '/teacher': typeof AuthenticatedTeacherRoute
+  '/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
   '/reviews/': typeof AuthenticatedReviewsIndexRoute
+  '/teacher/manage/$courseId': typeof AuthenticatedTeacherManageCourseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -229,7 +237,7 @@ export interface FileRoutesByTo {
   '/projects': typeof AuthenticatedProjectsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/snippets': typeof AuthenticatedSnippetsRoute
-  '/teacher': typeof AuthenticatedTeacherRoute
+  '/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
@@ -237,6 +245,7 @@ export interface FileRoutesByTo {
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
   '/reviews': typeof AuthenticatedReviewsIndexRoute
+  '/teacher/manage/$courseId': typeof AuthenticatedTeacherManageCourseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -260,7 +269,7 @@ export interface FileRoutesById {
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/snippets': typeof AuthenticatedSnippetsRoute
-  '/_authenticated/teacher': typeof AuthenticatedTeacherRoute
+  '/_authenticated/teacher': typeof AuthenticatedTeacherRouteWithChildren
   '/u/$username': typeof UUsernameRoute
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/api/cron/daily-bug': typeof ApiCronDailyBugRoute
@@ -268,6 +277,7 @@ export interface FileRoutesById {
   '/api/teacher/file': typeof ApiTeacherFileRoute
   '/api/teacher/upload': typeof ApiTeacherUploadRoute
   '/_authenticated/reviews/': typeof AuthenticatedReviewsIndexRoute
+  '/_authenticated/teacher/manage/$courseId': typeof AuthenticatedTeacherManageCourseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/api/teacher/file'
     | '/api/teacher/upload'
     | '/reviews/'
+    | '/teacher/manage/$courseId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/api/teacher/file'
     | '/api/teacher/upload'
     | '/reviews'
+    | '/teacher/manage/$courseId'
   id:
     | '__root__'
     | '/'
@@ -358,6 +370,7 @@ export interface FileRouteTypes {
     | '/api/teacher/file'
     | '/api/teacher/upload'
     | '/_authenticated/reviews/'
+    | '/_authenticated/teacher/manage/$courseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -574,8 +587,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTeacherUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/teacher/manage/$courseId': {
+      id: '/_authenticated/teacher/manage/$courseId'
+      path: '/manage/$courseId'
+      fullPath: '/teacher/manage/$courseId'
+      preLoaderRoute: typeof AuthenticatedTeacherManageCourseIdRouteImport
+      parentRoute: typeof AuthenticatedTeacherRoute
+    }
   }
 }
+
+interface AuthenticatedTeacherRouteChildren {
+  AuthenticatedTeacherManageCourseIdRoute: typeof AuthenticatedTeacherManageCourseIdRoute
+}
+
+const AuthenticatedTeacherRouteChildren: AuthenticatedTeacherRouteChildren = {
+  AuthenticatedTeacherManageCourseIdRoute:
+    AuthenticatedTeacherManageCourseIdRoute,
+}
+
+const AuthenticatedTeacherRouteWithChildren =
+  AuthenticatedTeacherRoute._addFileChildren(AuthenticatedTeacherRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
@@ -590,7 +622,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSnippetsRoute: typeof AuthenticatedSnippetsRoute
-  AuthenticatedTeacherRoute: typeof AuthenticatedTeacherRoute
+  AuthenticatedTeacherRoute: typeof AuthenticatedTeacherRouteWithChildren
   AuthenticatedReviewsIdRoute: typeof AuthenticatedReviewsIdRoute
   AuthenticatedReviewsIndexRoute: typeof AuthenticatedReviewsIndexRoute
 }
@@ -608,7 +640,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSnippetsRoute: AuthenticatedSnippetsRoute,
-  AuthenticatedTeacherRoute: AuthenticatedTeacherRoute,
+  AuthenticatedTeacherRoute: AuthenticatedTeacherRouteWithChildren,
   AuthenticatedReviewsIdRoute: AuthenticatedReviewsIdRoute,
   AuthenticatedReviewsIndexRoute: AuthenticatedReviewsIndexRoute,
 }

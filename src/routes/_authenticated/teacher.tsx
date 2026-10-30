@@ -94,9 +94,7 @@ function TeacherDashboard() {
   };
 
   const openManager = async (course: Course, panel: Panel = "details") => {
-    setSelectedCourse(course);
-    setActivePanel(panel);
-    window.history.replaceState(null, "", `/teacher#manage-${course.id}`);
+    window.location.assign(`/teacher/manage/${course.id}?panel=${panel}`);
     window.setTimeout(() => document.getElementById("course-manager")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
     if (panel !== "requests") return;
     const { data, error } = await (supabase as any)
