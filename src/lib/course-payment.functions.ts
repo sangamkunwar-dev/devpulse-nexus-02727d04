@@ -5,7 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const createCourseCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const courseId = typeof data === "string" ? data : "";
+    const input = typeof data === "string" ? { courseId: data } : (data as { courseId?: string; origin?: string } | undefined);
+    const courseId = input?.courseId?.trim() ?? "";
     if (!courseId) throw new Response("Course is required", { status: 400 });
 
     const { data: course, error } = await context.supabase
@@ -22,7 +23,10 @@ export const createCourseCheckout = createServerFn({ method: "POST" })
     if (!secretKey) throw new Response("Stripe is not configured", { status: 503 });
 
     const stripe = new Stripe(secretKey);
-    const origin = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL?.replace(/\/$/, "") || "http://localhost:3000";
+    const configuredOrigin = process.env.NEXT_PUBLIC_APP_URL || process.env.VITE_APP_URL;
+    const requestedOrigin = input?.origin?.trim();
+    const origin = (requestedOrigin || configuredOrigin || "http://localhost:3000").replace(/\/$/, "");
+    if (!/^https?:\/\//i.test(origin)) throw new Response("Invalid checkout origin", { status: 400 });
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{
@@ -35,6 +39,7 @@ export const createCourseCheckout = createServerFn({ method: "POST" })
       }],
       customer_email: context.user.email,
       metadata: { courseId: course.id, studentId: context.userId },
+      integration_identifier: `devpulse-course-${Math.random().toString(36).slice(2, 10)}`,
       success_url: `${origin}/courses?payment=success&course=${encodeURIComponent(course.id)}`,
       cancel_url: `${origin}/courses?payment=cancelled`,
     });

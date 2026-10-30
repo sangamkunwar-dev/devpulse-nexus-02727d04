@@ -62,10 +62,15 @@ function CoursesPage() {
     const course = courses.find((item) => item.id === courseId);
     if (course && !course.is_free) {
       try {
-        const { url } = await createCourseCheckout({ data: courseId });
+        const { url } = await createCourseCheckout({
+          data: { courseId, origin: window.location.origin },
+        });
         window.location.assign(url);
-      } catch {
-        toast.error("Could not start secure checkout.");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Could not start secure checkout.";
+        toast.error(message.includes("Stripe is not configured")
+          ? "Stripe checkout is not configured for this project yet."
+          : "Could not start secure checkout.");
       }
       return;
     }
