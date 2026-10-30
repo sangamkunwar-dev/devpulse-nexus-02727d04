@@ -5,8 +5,18 @@ import { motion } from "motion/react";
 import { Trophy, Crown, Globe2, MapPin } from "lucide-react";
 
 function CountryFlag({ code, name }: { code?: string | null; name?: string }) {
-  if (!code || code.length !== 2) return <Globe2 className="h-4 w-4" aria-label="Global" />;
-  return <img src={`https://flagcdn.com/w40/${code.toLowerCase()}.png`} alt={name ? `${name} flag` : `${code.toUpperCase()} flag`} className="inline-block h-4 w-6 rounded-sm object-cover align-[-2px]" loading="lazy" />;
+  if (!code || code.length !== 2) return <Globe2 className="h-4 w-4 shrink-0" aria-label="Global" />;
+
+  return (
+    <span className="inline-flex h-4 w-6 shrink-0 overflow-hidden rounded-[3px] align-[-2px] bg-muted shadow-sm ring-1 ring-border/60 sm:h-5 sm:w-7" aria-hidden="true">
+      <img
+        src={`https://flagcdn.com/h40/${code.toLowerCase()}.png`}
+        alt={name ? `${name} flag` : `${code.toUpperCase()} flag`}
+        className="block h-full w-full object-cover"
+        loading="lazy"
+      />
+    </span>
+  );
 }
 
 const countryName = (code?: string | null) => {
