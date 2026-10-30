@@ -97,6 +97,28 @@ function Index() {
 
       {/* Hero */}
       <section className="hero-bg relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+          <motion.div
+            className="absolute -left-24 top-12 h-72 w-72 rounded-full bg-primary/20 blur-3xl"
+            animate={{ x: [0, 80, 0], y: [0, 50, 0], scale: [1, 1.15, 1] }}
+            transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute -right-24 top-36 h-80 w-80 rounded-full bg-accent/15 blur-3xl"
+            animate={{ x: [0, -70, 0], y: [0, -45, 0], scale: [1.1, 1, 1.1] }}
+            transition={{ duration: 17, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute left-1/2 top-24 h-96 w-96 -translate-x-1/2 rounded-full border border-primary/10"
+            animate={{ scale: [0.8, 1.15, 0.8], opacity: [0.2, 0.6, 0.2] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute left-1/2 top-40 h-64 w-64 -translate-x-1/2 rounded-full border border-primary/10"
+            animate={{ scale: [1.15, 0.8, 1.15], opacity: [0.5, 0.15, 0.5] }}
+            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
         <div className="grid-pattern absolute inset-0 [mask-image:radial-gradient(ellipse_60%_60%_at_50%_0%,black,transparent)]" />
         <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-20 text-center md:pt-28">
           <motion.div
