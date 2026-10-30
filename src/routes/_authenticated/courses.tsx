@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { BookOpen, CheckCircle2, ChevronDown, ChevronUp, Github, LockKeyhole, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { createCourseCheckout } from "@/lib/course-payment.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/courses")({ component: CoursesPage });
@@ -58,6 +59,17 @@ function CoursesPage() {
     })();
   }, []);
   const enroll = async (courseId: string) => {
+    const course = courses.find((item) => item.id === courseId);
+    if (course && !course.is_free) {
+      try {
+        const { url } = await createCourseCheckout({ data: courseId });
+        window.location.assign(url);
+      } catch {
+        toast.error("Could not start secure checkout.");
+      }
+      return;
+    }
+
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return;
     const { error } = await (supabase as any)
@@ -165,7 +177,7 @@ function CoursesPage() {
                       Enrolled
                     </>
                   ) : (
-                    "Join course"
+                    course.is_free ? "Join course" : `Pay $${Number(course.price || 0).toFixed(2)} to join`
                   )}
                 </Button>
               </article>
