@@ -25,7 +25,10 @@ export const createCourseCheckout = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (error || !course) throw new Response("Course not found", { status: 404 });
-    if (course.is_free || Number(course.price) <= 0) throw new Response("This course is free", { status: 400 });
+    const price = Number(course.price);
+    if (course.is_free || !Number.isFinite(price) || price <= 0) {
+      throw new Response("This course is free", { status: 400 });
+    }
 
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) throw new Response("Stripe is not configured", { status: 503 });

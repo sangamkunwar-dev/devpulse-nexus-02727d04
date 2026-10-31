@@ -82,7 +82,8 @@ function CoursesPage() {
         } else if (normalized.includes("course not found")) {
           toast.error("This course is no longer available for purchase.");
         } else {
-          toast.error("Could not start secure checkout. Please try again.");
+          console.error("[v0] Course checkout failed:", error);
+          toast.error(message || "Could not start secure checkout. Please try again.");
         }
       }
       return;
