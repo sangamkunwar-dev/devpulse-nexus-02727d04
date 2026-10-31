@@ -5,9 +5,7 @@ import { toast } from "sonner";
 import { Globe, Lock, Copy, Loader2, ExternalLink } from "lucide-react";
 
 const countries = (() => {
-  const regionCodes = typeof Intl.supportedValuesOf === "function"
-    ? Intl.supportedValuesOf("region").filter((code) => /^[A-Z]{2}$/.test(code))
-    : ["US", "CA", "GB", "IN", "NP", "AU", "DE", "FR", "BR", "JP", "SG", "ZA"];
+  const regionCodes = ["US", "CA", "GB", "IN", "NP", "AU", "DE", "FR", "BR", "JP", "SG", "ZA"];
   const displayNames = new Intl.DisplayNames(["en"], { type: "region" });
 
   return regionCodes

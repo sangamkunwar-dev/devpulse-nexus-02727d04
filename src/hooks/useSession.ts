@@ -14,10 +14,19 @@ export function useSession() {
       setSession(s);
       setLoading(false);
     });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn("[v0] Session restore failed:", error.message);
+        }
+        setSession(data.session);
+      })
+      .catch((error) => {
+        console.warn("[v0] Session restore failed:", error);
+        setSession(null);
+      })
+      .finally(() => setLoading(false));
     return () => subscription.unsubscribe();
   }, []);
 
@@ -34,7 +43,10 @@ export function useProfile(userId: string | null) {
         .select("*")
         .eq("user_id", userId!)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        console.warn("[v0] Profile loading failed:", error.message);
+        return null;
+      }
       return data;
     },
   });
