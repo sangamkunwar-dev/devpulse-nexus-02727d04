@@ -62,15 +62,28 @@ function CoursesPage() {
     const course = courses.find((item) => item.id === courseId);
     if (course && !course.is_free) {
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        if (!accessToken) {
+          toast.error("Your session expired. Please sign in again, then try joining the course.");
+          return;
+        }
         const { url } = await createCourseCheckout({
-          data: { courseId, origin: window.location.origin },
+          data: { courseId, origin: window.location.origin, accessToken },
         });
         window.location.assign(url);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Could not start secure checkout.";
-        toast.error(message.includes("Stripe is not configured")
-          ? "Stripe checkout is not configured for this project yet."
-          : "Could not start secure checkout.");
+        const message = error instanceof Error ? error.message : "";
+        const normalized = message.toLowerCase();
+        if (normalized.includes("stripe is not configured")) {
+          toast.error("Stripe checkout is not configured for this project yet.");
+        } else if (normalized.includes("unauthorized")) {
+          toast.error("Your session expired. Please sign in again, then try joining the course.");
+        } else if (normalized.includes("course not found")) {
+          toast.error("This course is no longer available for purchase.");
+        } else {
+          toast.error("Could not start secure checkout. Please try again.");
+        }
       }
       return;
     }

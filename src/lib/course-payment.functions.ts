@@ -6,6 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const checkoutInput = z.object({
   courseId: z.string().trim().min(1),
   origin: z.string().url().optional(),
+  accessToken: z.string().min(1),
 });
 
 export const createCourseCheckout = createServerFn({ method: "POST" })

@@ -31,10 +31,11 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
-  async ({ next }) => {
+  async ({ next, data }) => {
     
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    // Vite exposes these names in this TanStack Start app; keep the server names as a fallback for production.
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       const missing = [
@@ -52,7 +53,11 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       throw new Error('Unauthorized: No request headers available');
     }
 
-    const authHeader = request.headers.get('authorization');
+    const requestToken = request.headers.get('authorization');
+    const inputToken = typeof (data as unknown as { accessToken?: unknown } | undefined)?.accessToken === 'string'
+      ? (data as unknown as { accessToken: string }).accessToken
+      : undefined;
+    const authHeader = requestToken || (inputToken ? `Bearer ${inputToken}` : null);
 
     if (!authHeader) {
       throw new Error('Unauthorized: No authorization header provided');
@@ -89,20 +94,20 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       }
     );
 
-    const { data, error } = await supabase.auth.getClaims(token);
-    if (error || !data?.claims) {
+    const { data: claimsData, error } = await supabase.auth.getClaims(token);
+    if (error || !claimsData?.claims) {
       throw new Error('Unauthorized: Invalid token');
     }
 
-    if (!data.claims.sub) {
+    if (!claimsData.claims.sub) {
       throw new Error('Unauthorized: No user ID found in token');
     }
 
     return next({
       context: {
         supabase,
-        userId: data.claims.sub,
-        claims: data.claims,
+        userId: claimsData.claims.sub,
+        claims: claimsData.claims,
       },
     });
   },
