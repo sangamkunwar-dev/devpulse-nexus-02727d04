@@ -167,8 +167,15 @@ function CoursesPage() {
             <p className="mt-1 text-sm text-muted-foreground">Check back soon for new lessons.</p>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {courses.map((course) => (
+          courses.filter((course) => !enrolled.includes(course.id)).length === 0 ? (
+            <div className="bento-card p-8 text-center">
+              <CheckCircle2 className="mx-auto mb-3 text-primary" />
+              <p className="font-medium">You&apos;re enrolled in every available course.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Continue learning from the enrolled courses above.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {courses.filter((course) => !enrolled.includes(course.id)).map((course) => (
               <article key={course.id} className="bento-card flex flex-col gap-5 p-6">
                 <div>
                   <span className="text-xs text-primary">{course.level}</span>
@@ -201,7 +208,7 @@ function CoursesPage() {
               </article>
             ))}
           </div>
-        )}
+          ))}
       </div>
     </main>
   );
