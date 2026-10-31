@@ -179,9 +179,9 @@ function TeacherDashboard() {
   };
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground">
+    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-6 sm:py-10">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-10 flex items-start justify-between gap-4">
+        <div className="mb-8 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="mb-2 text-sm text-primary">TEACHER STUDIO</p>
             <h1 className="font-display text-4xl font-semibold">Teach what you know.</h1>
