@@ -1,15 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import Stripe from "stripe";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const checkoutInput = z.object({
+  courseId: z.string().trim().min(1),
+  origin: z.string().url().optional(),
+});
+
 export const createCourseCheckout = createServerFn({ method: "POST" })
+  .validator(checkoutInput)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const input = typeof data === "string" ? { courseId: data } : (data as { courseId?: string; origin?: string } | undefined);
+    const input = data;
     const courseId = input?.courseId?.trim() ?? "";
     if (!courseId) throw new Response("Course is required", { status: 400 });
 
-    const { data: course, error } = await context.supabase
+    const { data: course, error } = await (context.supabase as any)
       .from("courses")
       .select("id,title,description,is_free,price")
       .eq("id", courseId)
@@ -37,9 +44,8 @@ export const createCourseCheckout = createServerFn({ method: "POST" })
         },
         quantity: 1,
       }],
-      customer_email: context.user.email,
+      customer_email: typeof context.claims.email === "string" ? context.claims.email : undefined,
       metadata: { courseId: course.id, studentId: context.userId },
-      integration_identifier: `devpulse-course-${Math.random().toString(36).slice(2, 10)}`,
       success_url: `${origin}/courses?payment=success&course=${encodeURIComponent(course.id)}`,
       cancel_url: `${origin}/courses?payment=cancelled`,
     });
