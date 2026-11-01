@@ -42,7 +42,10 @@ export const verifyCoursePayment = createServerFn({ method: "POST" })
       body: JSON.stringify({ pidx: data.pidx }),
     });
     const payment = await response.json() as { status?: string; purchase_order_id?: string };
-    if (!response.ok || payment.status !== "Completed") throw new Response("Khalti payment was not completed", { status: 400 });
+    const paymentStatus = payment.status?.trim().toLowerCase();
+    if (!response.ok || paymentStatus !== "completed") {
+      throw new Response("Khalti payment was not completed", { status: 400 });
+    }
     const [courseId, userId] = (payment.purchase_order_id ?? "").split(":");
     if (!courseId || userId !== context.userId) throw new Response("Payment details do not match this account", { status: 400 });
     const { error } = await (context.supabase as any).from("course_enrollments").upsert(
