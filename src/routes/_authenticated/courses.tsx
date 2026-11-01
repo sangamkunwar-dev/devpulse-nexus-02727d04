@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import { BookOpen, CheckCircle2, ChevronDown, ChevronUp, Github, LockKeyhole, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { createCourseCheckout, verifyCoursePayment } from "@/lib/course-payment.functions";
+import {
+  createCardCheckout,
+  createCourseCheckout,
+  verifyCoursePayment,
+  verifyStripeCoursePayment,
+} from "@/lib/course-payment.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/courses")({ component: CoursesPage });
@@ -51,20 +56,21 @@ function CoursesPage() {
       const { data: user } = await supabase.auth.getUser();
       const params = new URLSearchParams(window.location.search);
       const pidx = params.get("pidx");
+      const sessionId = params.get("session_id");
       if (user.user) {
-        if (pidx && params.get("payment") === "khalti") {
+        if ((pidx && params.get("payment") === "khalti") || (sessionId && params.get("payment") === "stripe")) {
           try {
             const { data: sessionData } = await supabase.auth.getSession();
-            if (sessionData.session?.access_token) {
-              const result = await verifyCoursePayment({
-                data: { pidx, accessToken: sessionData.session.access_token },
-              });
-              setEnrolled((items) => items.includes(result.courseId) ? items : [...items, result.courseId]);
-              toast.success("Khalti payment confirmed. You are now enrolled.");
-              window.history.replaceState({}, "", "/courses");
-            }
+            const accessToken = sessionData.session?.access_token;
+            if (!accessToken) throw new Error("Your session expired");
+            const result = pidx
+              ? await verifyCoursePayment({ data: { pidx, accessToken } })
+              : await verifyStripeCoursePayment({ data: { sessionId: sessionId!, accessToken } });
+            setEnrolled((items) => items.includes(result.courseId) ? items : [...items, result.courseId]);
+            toast.success("Payment confirmed. You are now enrolled.");
+            window.history.replaceState({}, "", "/courses");
           } catch (error) {
-            console.error("[v0] Khalti payment verification failed:", error);
+            console.error("[v0] Course payment verification failed:", error);
             toast.error("Payment could not be confirmed yet. Please contact support if you were charged.");
           }
         }
@@ -211,19 +217,40 @@ function CoursesPage() {
                     )}
                   </div>
                 </div>
-                <Button
-                  onClick={() => void enroll(course.id)}
-                  disabled={enrolled.includes(course.id)}
-                >
-                  {enrolled.includes(course.id) ? (
-                    <>
-                      <CheckCircle2 data-icon="inline-start" />
-                      Enrolled
-                    </>
-                  ) : (
-                    course.is_free ? "Join course" : `Pay NPR ${Number(course.price || 0).toFixed(2)} with Khalti`
-                  )}
-                </Button>
+                {course.is_free ? (
+                  <Button onClick={() => void enroll(course.id)} disabled={enrolled.includes(course.id)}>
+                    {enrolled.includes(course.id) ? <><CheckCircle2 data-icon="inline-start" /> Enrolled</> : "Join course"}
+                  </Button>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Button onClick={() => void enroll(course.id)} disabled={enrolled.includes(course.id)}>
+                      Pay NPR {Number(course.price || 0).toFixed(2)} with Khalti
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const { data: sessionData } = await supabase.auth.getSession();
+                          const accessToken = sessionData.session?.access_token;
+                          if (!accessToken) {
+                            toast.error("Your session expired. Please sign in again.");
+                            return;
+                          }
+                          const { url } = await createCardCheckout({
+                            data: { courseId: course.id, origin: window.location.origin, accessToken },
+                          });
+                          window.location.assign(url);
+                        } catch (error) {
+                          console.error("[v0] Card checkout failed:", error);
+                          toast.error(error instanceof Error ? error.message : "Could not start card checkout. Please try again.");
+                        }
+                      }}
+                      disabled={enrolled.includes(course.id)}
+                    >
+                      Pay by credit/debit card
+                    </Button>
+                  </div>
+                )}
               </article>
             ))}
           </div>
