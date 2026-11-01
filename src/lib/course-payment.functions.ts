@@ -15,7 +15,7 @@ function getKhaltiConfig() {
   // Khalti sandbox keys must use the sandbox API and sandbox checkout account.
   const baseUrl = secret.startsWith("test_")
     ? "https://dev.khalti.com/api/v2"
-    : "https://a.khalti.com/api/v2";
+    : "https://khalti.com/api/v2";
 
   return { secret, baseUrl };
 }
