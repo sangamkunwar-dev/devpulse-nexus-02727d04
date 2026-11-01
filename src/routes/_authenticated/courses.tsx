@@ -96,7 +96,13 @@ function CoursesPage() {
         });
         window.location.assign(url);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "";
+        const message = error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : error && typeof error === "object" && "message" in error
+              ? String((error as { message?: unknown }).message ?? "")
+              : "";
         const normalized = message.toLowerCase();
         if (normalized.includes("khalti is not configured")) {
           toast.error("Khalti checkout is not configured for this project yet.");

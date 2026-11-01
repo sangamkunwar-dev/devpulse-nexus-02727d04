@@ -11,9 +11,12 @@ const checkoutInput = z.object({
 function getKhaltiConfig() {
   const secret = process.env.KHALTI_SECRET_KEY?.trim();
   if (!secret) throw new Response("Khalti is not configured", { status: 503 });
+  if (!/^(test_)?(live_)?secret_key_/.test(secret)) {
+    throw new Response("KHALTI_SECRET_KEY must be a Khalti v2 secret key (test_secret_key_... for sandbox)", { status: 503 });
+  }
 
   // Khalti sandbox keys must use the sandbox API and sandbox checkout account.
-  const baseUrl = secret.includes("test_")
+  const baseUrl = secret.startsWith("test_secret_key_")
     ? "https://dev.khalti.com/api/v2"
     : "https://khalti.com/api/v2";
 
