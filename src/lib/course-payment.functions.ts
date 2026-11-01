@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import Stripe from "stripe";
+import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -9,22 +9,37 @@ const checkoutInput = z.object({
   accessToken: z.string().min(1),
 });
 
-function getStripe() {
-  const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
-  if (!secretKey) throw new Response("Stripe is not configured", { status: 503 });
-  return new Stripe(secretKey);
+const khaltiBaseUrl = "https://a.khalti.com/api/v2";
+
+function getKhaltiSecret() {
+  const secret = process.env.KHALTI_SECRET_KEY?.trim();
+  if (!secret) throw new Response("Khalti is not configured", { status: 503 });
+  return secret;
+}
+
+async function khaltiRequest(path: string, body: Record<string, unknown>) {
+  const response = await fetch(`${khaltiBaseUrl}${path}`, {
+    method: "POST",
+    headers: { Authorization: `Key ${getKhaltiSecret()}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Response("Khalti could not start the payment", { status: 502 });
+  return response.json() as Promise<{ pidx?: string; payment_url?: string; status?: string; total_amount?: number; purchase_order_id?: string }>;
 }
 
 export const verifyCoursePayment = createServerFn({ method: "POST" })
-  .validator(z.object({ sessionId: z.string().min(1), accessToken: z.string().min(1) }))
+  .validator(z.object({ pidx: z.string().min(1), accessToken: z.string().min(1) }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const session = await getStripe().checkout.sessions.retrieve(data.sessionId);
-    if (session.payment_status !== "paid" || session.metadata?.userId !== context.userId) {
-      throw new Response("Stripe payment was not completed", { status: 400 });
-    }
-    const courseId = session.metadata?.courseId;
-    if (!courseId) throw new Response("Payment is missing course details", { status: 400 });
+    const response = await fetch(`${khaltiBaseUrl}/epayment/lookup/`, {
+      method: "POST",
+      headers: { Authorization: `Key ${getKhaltiSecret()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ pidx: data.pidx }),
+    });
+    const payment = await response.json() as { status?: string; purchase_order_id?: string };
+    if (!response.ok || payment.status !== "Completed") throw new Response("Khalti payment was not completed", { status: 400 });
+    const [courseId, userId] = (payment.purchase_order_id ?? "").split(":");
+    if (!courseId || userId !== context.userId) throw new Response("Payment details do not match this account", { status: 400 });
     const { error } = await (context.supabase as any).from("course_enrollments").upsert(
       { course_id: courseId, student_id: context.userId },
       { onConflict: "course_id,student_id" },
@@ -44,28 +59,17 @@ export const createCourseCheckout = createServerFn({ method: "POST" })
       .eq("id", courseId)
       .eq("published", true)
       .maybeSingle();
-
     if (error || !course) throw new Response("Course not found", { status: 404 });
     const price = Number(course.price);
     if (course.is_free || !Number.isFinite(price) || price <= 0) throw new Response("This course is free", { status: 400 });
-
     const origin = (data.origin || process.env.VITE_APP_URL || "http://localhost:3000").replace(/\/$/, "");
-    const session = await getStripe().checkout.sessions.create({
-      mode: "payment",
-      ui_mode: "hosted_page",
-      line_items: [{
-        price_data: {
-          currency: "usd",
-          product_data: { name: course.title, description: course.description || undefined },
-          unit_amount: Math.round(price * 100),
-        },
-        quantity: 1,
-      }],
-      metadata: { courseId: course.id, userId: context.userId },
-      success_url: `${origin}/courses?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/courses?payment=cancelled`,
+    const payment = await khaltiRequest("/epayment/initiate/", {
+      return_url: `${origin}/courses?payment=khalti`,
+      website_url: origin,
+      amount: Math.round(price * 100),
+      purchase_order_id: `${course.id}:${context.userId}`,
+      purchase_order_name: course.title,
     });
-
-    if (!session.url) throw new Response("Stripe did not return a checkout URL", { status: 502 });
-    return { url: session.url };
+    if (!payment.payment_url || !payment.pidx) throw new Response("Khalti did not return a checkout URL", { status: 502 });
+    return { url: payment.payment_url };
   });

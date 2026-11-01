@@ -50,21 +50,21 @@ function CoursesPage() {
       }
       const { data: user } = await supabase.auth.getUser();
       const params = new URLSearchParams(window.location.search);
-      const sessionId = params.get("session_id");
+      const pidx = params.get("pidx");
       if (user.user) {
-        if (sessionId && params.get("payment") === "success") {
+        if (pidx && params.get("payment") === "khalti") {
           try {
             const { data: sessionData } = await supabase.auth.getSession();
             if (sessionData.session?.access_token) {
               const result = await verifyCoursePayment({
-                data: { sessionId, accessToken: sessionData.session.access_token },
+                data: { pidx, accessToken: sessionData.session.access_token },
               });
               setEnrolled((items) => items.includes(result.courseId) ? items : [...items, result.courseId]);
-              toast.success("Payment confirmed. You are now enrolled.");
+              toast.success("Khalti payment confirmed. You are now enrolled.");
               window.history.replaceState({}, "", "/courses");
             }
           } catch (error) {
-            console.error("[v0] Stripe payment verification failed:", error);
+            console.error("[v0] Khalti payment verification failed:", error);
             toast.error("Payment could not be confirmed yet. Please contact support if you were charged.");
           }
         }
@@ -93,8 +93,8 @@ function CoursesPage() {
       } catch (error) {
         const message = error instanceof Error ? error.message : "";
         const normalized = message.toLowerCase();
-        if (normalized.includes("stripe is not configured")) {
-          toast.error("Secure card checkout is not configured for this project yet.");
+        if (normalized.includes("khalti is not configured")) {
+          toast.error("Khalti checkout is not configured for this project yet.");
         } else if (normalized.includes("unauthorized")) {
           toast.error("Your session expired. Please sign in again, then try joining the course.");
         } else if (normalized.includes("course not found")) {
