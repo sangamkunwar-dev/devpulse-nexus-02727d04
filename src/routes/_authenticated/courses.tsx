@@ -61,6 +61,7 @@ function CoursesPage() {
             const accessToken = sessionData.session?.access_token;
             if (!accessToken) throw new Error("Your session expired");
             const result = await verifyCoursePayment({ data: { pidx, accessToken } });
+            // Keep the confirmed enrollment while the initial enrollment query finishes below.
             setEnrolled((items) => items.includes(result.courseId) ? items : [...items, result.courseId]);
             toast.success("Payment confirmed. You are now enrolled.");
             window.history.replaceState({}, "", "/courses");
@@ -73,7 +74,10 @@ function CoursesPage() {
           .from("course_enrollments")
           .select("course_id")
           .eq("student_id", user.user.id);
-        setEnrolled((rows ?? []).map((row: { course_id: string }) => row.course_id));
+        setEnrolled((items) => {
+          const loadedIds = (rows ?? []).map((row: { course_id: string }) => row.course_id);
+          return [...new Set([...items, ...loadedIds])];
+        });
       }
     })();
   }, []);
