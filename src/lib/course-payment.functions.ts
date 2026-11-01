@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import Stripe from "stripe";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -8,36 +9,35 @@ const checkoutInput = z.object({
   accessToken: z.string().min(1),
 });
 
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
+  if (!secretKey) throw new Response("Stripe is not configured", { status: 503 });
+  return new Stripe(secretKey);
+}
+
 export const verifyCoursePayment = createServerFn({ method: "POST" })
-  .validator(z.object({ pidx: z.string().min(1), courseId: z.string().min(1), accessToken: z.string().min(1) }))
+  .validator(z.object({ sessionId: z.string().min(1), accessToken: z.string().min(1) }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const secretKey = process.env.KHALTI_SECRET_KEY;
-    if (!secretKey) throw new Response("Khalti is not configured", { status: 503 });
-    const response = await fetch("https://a.khalti.com/api/v2/epayment/lookup/", {
-      method: "POST",
-      headers: { Authorization: `Key ${secretKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ pidx: data.pidx }),
-    });
-    if (!response.ok) throw new Response("Could not verify Khalti payment", { status: 502 });
-    const payment = (await response.json()) as { status?: string; total_amount?: number; transaction_id?: string };
-    if (payment.status !== "Completed") throw new Response("Khalti payment was not completed", { status: 400 });
+    const session = await getStripe().checkout.sessions.retrieve(data.sessionId);
+    if (session.payment_status !== "paid" || session.metadata?.userId !== context.userId) {
+      throw new Response("Stripe payment was not completed", { status: 400 });
+    }
+    const courseId = session.metadata?.courseId;
+    if (!courseId) throw new Response("Payment is missing course details", { status: 400 });
     const { error } = await (context.supabase as any).from("course_enrollments").upsert(
-      { course_id: data.courseId, student_id: context.userId },
+      { course_id: courseId, student_id: context.userId },
       { onConflict: "course_id,student_id" },
     );
     if (error) throw new Response("Payment verified but enrollment could not be saved", { status: 500 });
-    return { success: true };
+    return { success: true, courseId };
   });
 
 export const createCourseCheckout = createServerFn({ method: "POST" })
   .validator(checkoutInput)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const input = data;
-    const courseId = input?.courseId?.trim() ?? "";
-    if (!courseId) throw new Response("Course is required", { status: 400 });
-
+    const courseId = data.courseId.trim();
     const { data: course, error } = await (context.supabase as any)
       .from("courses")
       .select("id,title,description,is_free,price")
@@ -47,43 +47,25 @@ export const createCourseCheckout = createServerFn({ method: "POST" })
 
     if (error || !course) throw new Response("Course not found", { status: 404 });
     const price = Number(course.price);
-    if (course.is_free || !Number.isFinite(price) || price <= 0) {
-      throw new Response("This course is free", { status: 400 });
-    }
+    if (course.is_free || !Number.isFinite(price) || price <= 0) throw new Response("This course is free", { status: 400 });
 
-    const secretKey = process.env.KHALTI_SECRET_KEY?.trim();
-    if (!secretKey) throw new Response("Khalti is not configured", { status: 503 });
-
-    // Khalti uses a separate host for test keys. Using the live host with a
-    // sandbox key returns a generic initiation failure.
-    const khaltiBaseUrl = secretKey.startsWith("test_")
-      ? "https://dev.khalti.com"
-      : "https://khalti.com";
-    const configuredOrigin = process.env.NEXT_PUBLIC_APP_URL || process.env.VITE_APP_URL;
-    const requestedOrigin = input?.origin?.trim();
-    const origin = (requestedOrigin || configuredOrigin || "http://localhost:3000").replace(/\/$/, "");
-    if (!/^https?:\/\//i.test(origin)) throw new Response("Invalid checkout origin", { status: 400 });
-
-    const amount = Math.round(price * 100);
-    const response = await fetch(`${khaltiBaseUrl}/api/v2/epayment/initiate/`, {
-      method: "POST",
-      headers: { Authorization: `Key ${secretKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        return_url: `${origin}/courses?payment=success&course=${encodeURIComponent(course.id)}`,
-        website_url: origin,
-        amount,
-        purchase_order_id: `${course.id}-${context.userId}-${Date.now()}`,
-        purchase_order_name: course.title,
-        customer_info: typeof context.claims.email === "string" ? { email: context.claims.email } : undefined,
-      }),
+    const origin = (data.origin || process.env.VITE_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+    const session = await getStripe().checkout.sessions.create({
+      mode: "payment",
+      ui_mode: "hosted_page",
+      line_items: [{
+        price_data: {
+          currency: "usd",
+          product_data: { name: course.title, description: course.description || undefined },
+          unit_amount: Math.round(price * 100),
+        },
+        quantity: 1,
+      }],
+      metadata: { courseId: course.id, userId: context.userId },
+      success_url: `${origin}/courses?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/courses?payment=cancelled`,
     });
 
-    if (!response.ok) {
-      const details = await response.text();
-      console.error("[v0] Khalti initiation failed:", response.status, details);
-      throw new Response("Could not start Khalti checkout", { status: 502 });
-    }
-    const checkout = (await response.json()) as { payment_url?: string };
-    if (!checkout.payment_url) throw new Response("Khalti did not return a payment URL", { status: 502 });
-    return { url: checkout.payment_url };
+    if (!session.url) throw new Response("Stripe did not return a checkout URL", { status: 502 });
+    return { url: session.url };
   });
