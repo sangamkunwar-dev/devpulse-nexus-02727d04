@@ -13,7 +13,7 @@ function getKhaltiConfig() {
   if (!secret) throw new Response("Khalti is not configured", { status: 503 });
 
   // Khalti sandbox keys must use the sandbox API and sandbox checkout account.
-  const baseUrl = secret.startsWith("test_")
+  const baseUrl = secret.includes("test_")
     ? "https://dev.khalti.com/api/v2"
     : "https://khalti.com/api/v2";
 
@@ -27,8 +27,20 @@ async function khaltiRequest(path: string, body: Record<string, unknown>) {
     headers: { Authorization: `Key ${secret}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Response("Khalti could not start the payment", { status: 502 });
-  return response.json() as Promise<{ pidx?: string; payment_url?: string; status?: string; total_amount?: number; purchase_order_id?: string }>;
+  const payload = await response.json().catch(() => null) as {
+    pidx?: string;
+    payment_url?: string;
+    status?: string;
+    total_amount?: number;
+    purchase_order_id?: string;
+    detail?: string;
+    error_key?: string;
+  } | null;
+  if (!response.ok) {
+    const detail = payload?.detail || payload?.error_key;
+    throw new Response(detail ? `Khalti checkout error: ${detail}` : "Khalti could not start the payment", { status: 502 });
+  }
+  return payload ?? {};
 }
 
 export const verifyCoursePayment = createServerFn({ method: "POST" })
