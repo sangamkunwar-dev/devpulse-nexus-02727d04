@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { BookOpen, CheckCircle2, ChevronDown, ChevronUp, Github, LockKeyhole, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { createCourseCheckout } from "@/lib/course-payment.functions";
+import { createCourseCheckout, verifyCoursePayment } from "@/lib/course-payment.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/courses")({ component: CoursesPage });
@@ -49,7 +49,25 @@ function CoursesPage() {
         setLessons(grouped);
       }
       const { data: user } = await supabase.auth.getUser();
+      const params = new URLSearchParams(window.location.search);
+      const pidx = params.get("pidx");
+      const returnedCourseId = params.get("course");
       if (user.user) {
+        if (pidx && returnedCourseId && params.get("payment") === "success") {
+          try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            if (sessionData.session?.access_token) {
+              await verifyCoursePayment({
+                data: { pidx, courseId: returnedCourseId, accessToken: sessionData.session.access_token },
+              });
+              toast.success("Payment confirmed. You are now enrolled.");
+              window.history.replaceState({}, "", "/courses");
+            }
+          } catch (error) {
+            console.error("[v0] Khalti payment verification failed:", error);
+            toast.error("Payment could not be confirmed yet. Please contact support if you were charged.");
+          }
+        }
         const { data: rows } = await (supabase as any)
           .from("course_enrollments")
           .select("course_id")
@@ -75,8 +93,8 @@ function CoursesPage() {
       } catch (error) {
         const message = error instanceof Error ? error.message : "";
         const normalized = message.toLowerCase();
-        if (normalized.includes("stripe is not configured")) {
-          toast.error("Stripe checkout is not configured for this project yet.");
+        if (normalized.includes("khalti is not configured")) {
+          toast.error("Khalti checkout is not configured for this project yet.");
         } else if (normalized.includes("unauthorized")) {
           toast.error("Your session expired. Please sign in again, then try joining the course.");
         } else if (normalized.includes("course not found")) {
