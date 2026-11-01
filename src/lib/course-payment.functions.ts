@@ -51,23 +51,28 @@ export const createCourseCheckout = createServerFn({ method: "POST" })
       throw new Response("This course is free", { status: 400 });
     }
 
-    const secretKey = process.env.KHALTI_SECRET_KEY;
+    const secretKey = process.env.KHALTI_SECRET_KEY?.trim();
     if (!secretKey) throw new Response("Khalti is not configured", { status: 503 });
 
+    // Khalti uses a separate host for test keys. Using the live host with a
+    // sandbox key returns a generic initiation failure.
+    const khaltiBaseUrl = secretKey.startsWith("test_")
+      ? "https://dev.khalti.com"
+      : "https://khalti.com";
     const configuredOrigin = process.env.NEXT_PUBLIC_APP_URL || process.env.VITE_APP_URL;
     const requestedOrigin = input?.origin?.trim();
     const origin = (requestedOrigin || configuredOrigin || "http://localhost:3000").replace(/\/$/, "");
     if (!/^https?:\/\//i.test(origin)) throw new Response("Invalid checkout origin", { status: 400 });
 
     const amount = Math.round(price * 100);
-    const response = await fetch("https://a.khalti.com/api/v2/epayment/initiate/", {
+    const response = await fetch(`${khaltiBaseUrl}/api/v2/epayment/initiate/`, {
       method: "POST",
       headers: { Authorization: `Key ${secretKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         return_url: `${origin}/courses?payment=success&course=${encodeURIComponent(course.id)}`,
         website_url: origin,
         amount,
-        purchase_order_id: course.id,
+        purchase_order_id: `${course.id}-${context.userId}-${Date.now()}`,
         purchase_order_name: course.title,
         customer_info: typeof context.claims.email === "string" ? { email: context.claims.email } : undefined,
       }),
