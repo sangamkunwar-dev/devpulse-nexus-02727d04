@@ -8,18 +8,23 @@ const checkoutInput = z.object({
   accessToken: z.string().min(1),
 });
 
-const khaltiBaseUrl = "https://a.khalti.com/api/v2";
-
-function getKhaltiSecret() {
+function getKhaltiConfig() {
   const secret = process.env.KHALTI_SECRET_KEY?.trim();
   if (!secret) throw new Response("Khalti is not configured", { status: 503 });
-  return secret;
+
+  // Khalti sandbox keys must use the sandbox API and sandbox checkout account.
+  const baseUrl = secret.startsWith("test_")
+    ? "https://dev.khalti.com/api/v2"
+    : "https://a.khalti.com/api/v2";
+
+  return { secret, baseUrl };
 }
 
 async function khaltiRequest(path: string, body: Record<string, unknown>) {
-  const response = await fetch(`${khaltiBaseUrl}${path}`, {
+  const { baseUrl, secret } = getKhaltiConfig();
+  const response = await fetch(`${baseUrl}${path}`, {
     method: "POST",
-    headers: { Authorization: `Key ${getKhaltiSecret()}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Key ${secret}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!response.ok) throw new Response("Khalti could not start the payment", { status: 502 });
@@ -30,9 +35,10 @@ export const verifyCoursePayment = createServerFn({ method: "POST" })
   .validator(z.object({ pidx: z.string().min(1), accessToken: z.string().min(1) }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const response = await fetch(`${khaltiBaseUrl}/epayment/lookup/`, {
+    const { baseUrl, secret } = getKhaltiConfig();
+    const response = await fetch(`${baseUrl}/epayment/lookup/`, {
       method: "POST",
-      headers: { Authorization: `Key ${getKhaltiSecret()}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Key ${secret}`, "Content-Type": "application/json" },
       body: JSON.stringify({ pidx: data.pidx }),
     });
     const payment = await response.json() as { status?: string; purchase_order_id?: string };
