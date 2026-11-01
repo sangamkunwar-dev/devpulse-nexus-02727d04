@@ -48,14 +48,28 @@ export const verifyCoursePayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const { baseUrl, secret } = getKhaltiConfig();
-    const response = await fetch(`${baseUrl}/epayment/lookup/`, {
-      method: "POST",
-      headers: { Authorization: `Key ${secret}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ pidx: data.pidx }),
-    });
-    const payment = await response.json() as { status?: string; purchase_order_id?: string };
+    let payment: { status?: string; purchase_order_id?: string } = {};
+    let responseOk = false;
+
+    // Khalti can briefly report a pending lookup immediately after redirecting
+    // back from checkout. Retry before treating a paid checkout as failed.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await fetch(`${baseUrl}/epayment/lookup/`, {
+        method: "POST",
+        headers: { Authorization: `Key ${secret}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ pidx: data.pidx }),
+      });
+      payment = await response.json().catch(() => ({})) as { status?: string; purchase_order_id?: string };
+      responseOk = response.ok;
+      const paymentStatus = payment.status?.trim().toLowerCase();
+      if (response.ok && paymentStatus === "completed") break;
+      if (attempt < 2 && response.ok && paymentStatus === "pending") {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+      }
+    }
+
     const paymentStatus = payment.status?.trim().toLowerCase();
-    if (!response.ok || paymentStatus !== "completed") {
+    if (!responseOk || paymentStatus !== "completed") {
       throw new Response("Khalti payment was not completed", { status: 400 });
     }
     const [courseId, userId] = (payment.purchase_order_id ?? "").split(":");
