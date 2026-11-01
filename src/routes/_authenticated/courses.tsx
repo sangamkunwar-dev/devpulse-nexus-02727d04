@@ -207,7 +207,7 @@ function CoursesPage() {
                     {course.is_free ? (
                       <span className="text-primary">Free</span>
                     ) : (
-                      <><LockKeyhole className="size-4 text-primary" /> ${Number(course.price || 0).toFixed(2)}</>
+                      <><LockKeyhole className="size-4 text-primary" /> NPR {Number(course.price || 0).toFixed(2)}</>
                     )}
                   </div>
                 </div>
@@ -221,7 +221,7 @@ function CoursesPage() {
                       Enrolled
                     </>
                   ) : (
-                    course.is_free ? "Join course" : `Pay $${Number(course.price || 0).toFixed(2)} to join`
+                    course.is_free ? "Join course" : `Pay NPR ${Number(course.price || 0).toFixed(2)} with Khalti`
                   )}
                 </Button>
               </article>
