@@ -11,12 +11,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  createCourseCheckout,
-  createStripeCourseCheckout,
-  verifyCoursePayment,
-  verifyStripeCoursePayment,
-} from "@/lib/course-payment.functions";
+import { createCourseCheckout, verifyCoursePayment } from "@/lib/course-payment.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/courses")({ component: CoursesPage });
@@ -90,19 +85,13 @@ function CoursesPage() {
       const { data: user } = await supabase.auth.getUser();
       const params = new URLSearchParams(window.location.search);
       const pidx = params.get("pidx");
-      const sessionId = params.get("session_id");
       if (user.user) {
-        if (
-          (pidx && params.get("payment") === "khalti") ||
-          (sessionId && params.get("payment") === "stripe")
-        ) {
+        if (pidx && params.get("payment") === "khalti") {
           try {
             const { data: sessionData } = await supabase.auth.getSession();
             const accessToken = sessionData.session?.access_token;
             if (!accessToken) throw new Error("Your session expired");
-            const result = pidx
-              ? await verifyCoursePayment({ data: { pidx, accessToken } })
-              : await verifyStripeCoursePayment({ data: { sessionId: sessionId!, accessToken } });
+            const result = await verifyCoursePayment({ data: { pidx, accessToken } });
             setEnrolled((items) =>
               items.includes(result.courseId) ? items : [...items, result.courseId],
             );
@@ -126,23 +115,6 @@ function CoursesPage() {
       }
     })();
   }, []);
-  const startStripeCheckout = async (courseId: string) => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-      if (!accessToken) throw new Error("Your session expired. Please sign in again.");
-      const { url } = await createStripeCourseCheckout({
-        data: { courseId, origin: window.location.origin, accessToken },
-      });
-      window.location.assign(url);
-    } catch (error) {
-      console.error("[v0] Card checkout failed:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Could not start card checkout. Please try again.",
-      );
-    }
-  };
-
   const enroll = async (courseId: string) => {
     const course = courses.find((item) => item.id === courseId);
     if (course && !course.is_free) {
@@ -344,21 +316,12 @@ function CoursesPage() {
                       )}
                     </Button>
                   ) : (
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        onClick={() => void enroll(course.id)}
-                        disabled={enrolled.includes(course.id)}
-                      >
-                        Pay NPR {Number(course.price || 0).toFixed(2)} with Khalti
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => void startStripeCheckout(course.id)}
-                        disabled={enrolled.includes(course.id)}
-                      >
-                        Pay by card or Google Pay
-                      </Button>
-                    </div>
+                    <Button
+                      onClick={() => void enroll(course.id)}
+                      disabled={enrolled.includes(course.id)}
+                    >
+                      Pay NPR {Number(course.price || 0).toFixed(2)} with Khalti
+                    </Button>
                   )}
                 </article>
               ))}
