@@ -1,11 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, CheckCircle2, ChevronDown, ChevronUp, Github, LockKeyhole, PlayCircle } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Github,
+  LockKeyhole,
+  PlayCircle,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   createCourseCheckout,
+  createStripeCourseCheckout,
   verifyCoursePayment,
+  verifyStripeCoursePayment,
 } from "@/lib/course-payment.functions";
 import { toast } from "sonner";
 
@@ -20,7 +30,14 @@ type Course = {
   teacher_id: string;
   repo_url?: string | null;
 };
-type Lesson = { id: string; course_id: string; title: string; content: string | null; position: number; asset_path?: string | null };
+type Lesson = {
+  id: string;
+  course_id: string;
+  title: string;
+  content: string | null;
+  position: number;
+  asset_path?: string | null;
+};
 type Teacher = { user_id: string; username: string; display_name: string | null };
 
 function CoursesPage() {
@@ -38,36 +55,64 @@ function CoursesPage() {
         .order("created_at", { ascending: false });
       const loadedCourses = (data ?? []) as Course[];
       setCourses(loadedCourses);
-      const teacherIds = [...new Set(loadedCourses.map((course) => course.teacher_id).filter(Boolean))];
+      const teacherIds = [
+        ...new Set(loadedCourses.map((course) => course.teacher_id).filter(Boolean)),
+      ];
       if (teacherIds.length) {
-        const { data: profiles } = await (supabase as any).from("profiles").select("user_id,username,display_name").in("user_id", teacherIds);
-        setTeachers(Object.fromEntries((profiles ?? []).map((profile: Teacher) => [profile.user_id, profile as Teacher])));
+        const { data: profiles } = await (supabase as any)
+          .from("profiles")
+          .select("user_id,username,display_name")
+          .in("user_id", teacherIds);
+        setTeachers(
+          Object.fromEntries(
+            (profiles ?? []).map((profile: Teacher) => [profile.user_id, profile as Teacher]),
+          ),
+        );
       }
       if (loadedCourses.length) {
-        const { data: lessonRows } = await (supabase as any).from("course_lessons").select("id,course_id,title,content,position,asset_path").in("course_id", loadedCourses.map((course) => course.id)).order("position", { ascending: true });
-        const grouped = (lessonRows ?? []).reduce((result: Record<string, Lesson[]>, lesson: Lesson) => {
-          (result[lesson.course_id] ??= []).push(lesson as Lesson);
-          return result;
-        }, {});
+        const { data: lessonRows } = await (supabase as any)
+          .from("course_lessons")
+          .select("id,course_id,title,content,position,asset_path")
+          .in(
+            "course_id",
+            loadedCourses.map((course) => course.id),
+          )
+          .order("position", { ascending: true });
+        const grouped = (lessonRows ?? []).reduce(
+          (result: Record<string, Lesson[]>, lesson: Lesson) => {
+            (result[lesson.course_id] ??= []).push(lesson as Lesson);
+            return result;
+          },
+          {},
+        );
         setLessons(grouped);
       }
       const { data: user } = await supabase.auth.getUser();
       const params = new URLSearchParams(window.location.search);
       const pidx = params.get("pidx");
+      const sessionId = params.get("session_id");
       if (user.user) {
-        if (pidx && params.get("payment") === "khalti") {
+        if (
+          (pidx && params.get("payment") === "khalti") ||
+          (sessionId && params.get("payment") === "stripe")
+        ) {
           try {
             const { data: sessionData } = await supabase.auth.getSession();
             const accessToken = sessionData.session?.access_token;
             if (!accessToken) throw new Error("Your session expired");
-            const result = await verifyCoursePayment({ data: { pidx, accessToken } });
-            // Keep the confirmed enrollment while the initial enrollment query finishes below.
-            setEnrolled((items) => items.includes(result.courseId) ? items : [...items, result.courseId]);
+            const result = pidx
+              ? await verifyCoursePayment({ data: { pidx, accessToken } })
+              : await verifyStripeCoursePayment({ data: { sessionId: sessionId!, accessToken } });
+            setEnrolled((items) =>
+              items.includes(result.courseId) ? items : [...items, result.courseId],
+            );
             toast.success("Payment confirmed. You are now enrolled.");
             window.history.replaceState({}, "", "/courses");
           } catch (error) {
             console.error("[v0] Course payment verification failed:", error);
-            toast.error("Payment could not be confirmed yet. Please contact support if you were charged.");
+            toast.error(
+              "Payment could not be confirmed yet. Please contact support if you were charged.",
+            );
           }
         }
         const { data: rows } = await (supabase as any)
@@ -81,6 +126,23 @@ function CoursesPage() {
       }
     })();
   }, []);
+  const startStripeCheckout = async (courseId: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Your session expired. Please sign in again.");
+      const { url } = await createStripeCourseCheckout({
+        data: { courseId, origin: window.location.origin, accessToken },
+      });
+      window.location.assign(url);
+    } catch (error) {
+      console.error("[v0] Card checkout failed:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Could not start card checkout. Please try again.",
+      );
+    }
+  };
+
   const enroll = async (courseId: string) => {
     const course = courses.find((item) => item.id === courseId);
     if (course && !course.is_free) {
@@ -96,13 +158,14 @@ function CoursesPage() {
         });
         window.location.assign(url);
       } catch (error) {
-        const message = error instanceof Error
-          ? error.message
-          : typeof error === "string"
-            ? error
-            : error && typeof error === "object" && "message" in error
-              ? String((error as { message?: unknown }).message ?? "")
-              : "";
+        const message =
+          error instanceof Error
+            ? error.message
+            : typeof error === "string"
+              ? error
+              : error && typeof error === "object" && "message" in error
+                ? String((error as { message?: unknown }).message ?? "")
+                : "";
         const normalized = message.toLowerCase();
         if (normalized.includes("khalti is not configured")) {
           toast.error("Khalti checkout is not configured for this project yet.");
@@ -154,39 +217,73 @@ function CoursesPage() {
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              {courses.filter((course) => enrolled.includes(course.id)).map((course) => (
-                <article key={`enrolled-${course.id}`} className="bento-card flex items-center justify-between gap-4 p-5">
-                  <div>
-                    <p className="text-xs font-medium text-primary">ENROLLED</p>
-                    <h3 className="mt-1 font-display text-xl font-semibold">{course.title}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">By {teachers[course.teacher_id]?.display_name ?? teachers[course.teacher_id]?.username ?? "Community teacher"}</p>
-                  </div>
-                  <Button variant="secondary" onClick={() => setOpenCourse(openCourse === course.id ? null : course.id)}>
-                    {openCourse === course.id ? <ChevronUp data-icon="inline-start" /> : <ChevronDown data-icon="inline-start" />}
-                    {openCourse === course.id ? "Hide lessons" : "Continue"}
-                  </Button>
-                  {openCourse === course.id && (
-                    <div className="col-span-full mt-2 border-t border-border pt-4">
-                      <p className="mb-3 text-sm font-medium">All lessons</p>
-                      {lessons[course.id]?.length ? (
-                        <ol className="flex flex-col gap-2">
-                          {lessons[course.id].map((lesson, index) => (
-                            <li key={lesson.id} className="rounded-lg bg-muted/40 px-3 py-2 text-sm">
-                              <span className="mr-2 text-primary">{index + 1}.</span>{lesson.title}
-                              {lesson.content && <p className="mt-1 text-xs text-muted-foreground">{lesson.content}</p>}
-                            </li>
-                          ))}
-                        </ol>
-                      ) : <p className="text-sm text-muted-foreground">No lessons have been added yet.</p>}
-                      {course.repo_url && (
-                        <a href={course.repo_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm text-primary hover:underline">
-                          <Github className="size-4" /> Open GitHub repository
-                        </a>
-                      )}
+              {courses
+                .filter((course) => enrolled.includes(course.id))
+                .map((course) => (
+                  <article
+                    key={`enrolled-${course.id}`}
+                    className="bento-card flex items-center justify-between gap-4 p-5"
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-primary">ENROLLED</p>
+                      <h3 className="mt-1 font-display text-xl font-semibold">{course.title}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        By{" "}
+                        {teachers[course.teacher_id]?.display_name ??
+                          teachers[course.teacher_id]?.username ??
+                          "Community teacher"}
+                      </p>
                     </div>
-                  )}
-                </article>
-              ))}
+                    <Button
+                      variant="secondary"
+                      onClick={() => setOpenCourse(openCourse === course.id ? null : course.id)}
+                    >
+                      {openCourse === course.id ? (
+                        <ChevronUp data-icon="inline-start" />
+                      ) : (
+                        <ChevronDown data-icon="inline-start" />
+                      )}
+                      {openCourse === course.id ? "Hide lessons" : "Continue"}
+                    </Button>
+                    {openCourse === course.id && (
+                      <div className="col-span-full mt-2 border-t border-border pt-4">
+                        <p className="mb-3 text-sm font-medium">All lessons</p>
+                        {lessons[course.id]?.length ? (
+                          <ol className="flex flex-col gap-2">
+                            {lessons[course.id].map((lesson, index) => (
+                              <li
+                                key={lesson.id}
+                                className="rounded-lg bg-muted/40 px-3 py-2 text-sm"
+                              >
+                                <span className="mr-2 text-primary">{index + 1}.</span>
+                                {lesson.title}
+                                {lesson.content && (
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    {lesson.content}
+                                  </p>
+                                )}
+                              </li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            No lessons have been added yet.
+                          </p>
+                        )}
+                        {course.repo_url && (
+                          <a
+                            href={course.repo_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-3 inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                          >
+                            <Github className="size-4" /> Open GitHub repository
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                ))}
             </div>
           </section>
         )}
@@ -196,45 +293,77 @@ function CoursesPage() {
             <p className="font-medium">No published courses yet.</p>
             <p className="mt-1 text-sm text-muted-foreground">Check back soon for new lessons.</p>
           </div>
-        ) : (
-          courses.filter((course) => !enrolled.includes(course.id)).length === 0 ? (
-            <div className="bento-card p-8 text-center">
-              <CheckCircle2 className="mx-auto mb-3 text-primary" />
-              <p className="font-medium">You&apos;re enrolled in every available course.</p>
-              <p className="mt-1 text-sm text-muted-foreground">Continue learning from the enrolled courses above.</p>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {courses.filter((course) => !enrolled.includes(course.id)).map((course) => (
-              <article key={course.id} className="bento-card flex flex-col gap-5 p-6">
-                <div>
-                  <span className="text-xs text-primary">{course.level}</span>
-                  <h2 className="mt-2 font-display text-2xl font-semibold">{course.title}</h2>
-                  <p className="mt-1 text-xs text-muted-foreground">By {teachers[course.teacher_id]?.display_name ?? teachers[course.teacher_id]?.username ?? "Community teacher"}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {course.description}
-                  </p>
-                  <div className="mt-4 flex items-center gap-2 text-sm font-medium">
-                    {course.is_free ? (
-                      <span className="text-primary">Free</span>
-                    ) : (
-                      <><LockKeyhole className="size-4 text-primary" /> NPR {Number(course.price || 0).toFixed(2)}</>
-                    )}
-                  </div>
-                </div>
-                {course.is_free ? (
-                  <Button onClick={() => void enroll(course.id)} disabled={enrolled.includes(course.id)}>
-                    {enrolled.includes(course.id) ? <><CheckCircle2 data-icon="inline-start" /> Enrolled</> : "Join course"}
-                  </Button>
-                ) : (
-                  <Button onClick={() => void enroll(course.id)} disabled={enrolled.includes(course.id)}>
-                    Pay NPR {Number(course.price || 0).toFixed(2)} with Khalti / Google Pay
-                  </Button>
-                )}
-              </article>
-            ))}
+        ) : courses.filter((course) => !enrolled.includes(course.id)).length === 0 ? (
+          <div className="bento-card p-8 text-center">
+            <CheckCircle2 className="mx-auto mb-3 text-primary" />
+            <p className="font-medium">You&apos;re enrolled in every available course.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Continue learning from the enrolled courses above.
+            </p>
           </div>
-          ))}
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {courses
+              .filter((course) => !enrolled.includes(course.id))
+              .map((course) => (
+                <article key={course.id} className="bento-card flex flex-col gap-5 p-6">
+                  <div>
+                    <span className="text-xs text-primary">{course.level}</span>
+                    <h2 className="mt-2 font-display text-2xl font-semibold">{course.title}</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      By{" "}
+                      {teachers[course.teacher_id]?.display_name ??
+                        teachers[course.teacher_id]?.username ??
+                        "Community teacher"}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {course.description}
+                    </p>
+                    <div className="mt-4 flex items-center gap-2 text-sm font-medium">
+                      {course.is_free ? (
+                        <span className="text-primary">Free</span>
+                      ) : (
+                        <>
+                          <LockKeyhole className="size-4 text-primary" /> NPR{" "}
+                          {Number(course.price || 0).toFixed(2)}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {course.is_free ? (
+                    <Button
+                      onClick={() => void enroll(course.id)}
+                      disabled={enrolled.includes(course.id)}
+                    >
+                      {enrolled.includes(course.id) ? (
+                        <>
+                          <CheckCircle2 data-icon="inline-start" /> Enrolled
+                        </>
+                      ) : (
+                        "Join course"
+                      )}
+                    </Button>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={() => void enroll(course.id)}
+                        disabled={enrolled.includes(course.id)}
+                      >
+                        Pay NPR {Number(course.price || 0).toFixed(2)} with Khalti
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => void startStripeCheckout(course.id)}
+                        disabled={enrolled.includes(course.id)}
+                      >
+                        Pay by card or Google Pay
+                      </Button>
+                    </div>
+                  )}
+                </article>
+              ))}
+          </div>
+        )}
       </div>
     </main>
   );
